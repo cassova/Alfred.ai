@@ -1,7 +1,8 @@
 import argparse
 import logging
 from typing import Optional
-from openai_api.chat import message
+#from openai_api.chat import message
+from llama_cpp_local.mistral_instruct import MistralInstruct
 
 
 def configure_logger(quiet_mode: bool, debug_mode: bool, log_file: Optional[str]=None):
@@ -41,19 +42,20 @@ def main():
     args = parser.parse_args()
 
     #configure_logger(True, args.debug, args.log_file)
-    configure_logger(True, True, args.log_file)
+    configure_logger(True, True, args.log_file)  # Hardcode enable debug mode
 
     logging.info(f"Starting Alfred.ai")
+    chat = MistralInstruct()
 
     if not args.task:
         print("Hello, give me a task to do...")
         try:
-            previous_dialog = []
-            system_prompt = "You are Alfred.ai, an expert python software developer.  You write code from scratch, debug broken code, and research solutions to problems you don't know."
+            context = ""
             while True:
                 user_input = input(">>> ")
-                previous_dialog = message(user_input, previous_dialog=previous_dialog, system_prompt=system_prompt)
-                print(previous_dialog[-1]["content"])
+                message, context = chat.message(user_input, context=context)
+                if message["tool_name"] == "Final Answer":
+                    print(message["input"])
         except KeyboardInterrupt:
             print(" *** ctrl+c was pressed ***")
 
