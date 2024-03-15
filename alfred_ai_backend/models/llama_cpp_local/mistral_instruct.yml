@@ -5,14 +5,20 @@ init:
   n_ctx: 8000
   f16_kv: True
   verbose: True
+  temperature: 0
   # stop:
   #  -  '```'
   #  - '<\s>'
   #  - 'Assistant: '
   #  - 'Human: '
 user_prompt: 'User: {input}'
-user_prompt_context: '{agent_scratchpad}\n Assistant: '
-user_prompt_starter_response: '```json\n{{\n"action":'
+user_prompt_context: |
+  {agent_scratchpad}
+  Assistant: 
+user_prompt_starter_response: |
+  ```json
+  {{
+    "action":
 system_prompt_template: |
   You are Alfred.ai, an expert python software developer. Respond to the human as helpfully and accurately as possible. You have access to the following tools:
 
@@ -22,12 +28,12 @@ system_prompt_template: |
 
   Valid "action" values: "Final Answer" or {tool_names}
 
-  Provide only ONE action per $JSON_BLOB, as shown:
+  Provide only ONE action per $JSON_BLOB and output ONLY this format:
 
-  ```
+  ```json
   {{
-    "action": $TOOL_NAME,
-    "action_input": $INPUT
+    "action": $TOOL_NAME_STRING,
+    "action_input": $INPUT_STRING
   }}
   ```
 
@@ -43,10 +49,11 @@ system_prompt_template: |
   ... (repeat Thought/Action/Observation N times)
   Thought: I know what to respond
   Action:
-  ```
+  ```json
   {{
     "action": "Final Answer",
     "action_input": "Final response to human"
   }}
+  ```
 
   Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation

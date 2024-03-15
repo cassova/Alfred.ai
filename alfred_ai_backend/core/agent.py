@@ -1,15 +1,12 @@
 from langchain.memory import ConversationBufferWindowMemory
-from langchain.agents import load_tools, AgentExecutor, create_structured_chat_agent
+from langchain.agents import load_tools, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate
+from typing import Dict, Any
 import logging
-# from alfred_ai_backend.core.output_parser import OutputParser
-from langchain_core.messages import AIMessage
 from alfred_ai_backend.models.llm import LlmWrapper
-import json
-from langchain.schema import AgentAction, AgentFinish
 
 
-# TODO: logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 # Source: https://github.com/pinecone-io/examples/blob/master/learn/generation/llm-field-guide/llama-2/llama-2-70b-chat-agent.ipynb
 class AgentWrapper():
@@ -37,7 +34,6 @@ class AgentWrapper():
             handle_parsing_errors=True,
             early_stopping_method="generate",
             memory=self._memory,
-            #agent_kwargs={"output_parser": output_parser}
         )
 
     def _load_prompt_from_config(self) -> ChatPromptTemplate:
@@ -47,5 +43,6 @@ class AgentWrapper():
         ])
         return prompt
 
-    def start_task(self, user_input_str: str):
-        return self._agent_executor.invoke({"input": user_input_str}, return_only_outputs=False, stop=['```'])
+    def start_task(self, user_input_str: str) -> Dict[str, Any]:
+        logger.info("*** Starting task ***")
+        return self._llm_wrapper.invoke_agent_executor(self._agent_executor, user_input_str)

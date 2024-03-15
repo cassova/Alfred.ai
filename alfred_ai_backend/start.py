@@ -5,7 +5,7 @@ from alfred_ai_backend.core.agent import AgentWrapper
 from alfred_ai_backend.config import Config
 from alfred_ai_backend.models.llama_cpp_local.mistral_instruct import MistralInstruct
 
-# TODO: logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def configure_logger(debug_mode: bool, log_file: Optional[str]=None):
     """Configure the logging
@@ -47,7 +47,7 @@ def main():
 
     configure_logger(args.debug, args.log_file)
 
-    logging.info(f"Starting Alfred.ai")
+    logger.info(f"Starting Alfred.ai")
     llm_wrapper = MistralInstruct()
     agent = AgentWrapper(llm_wrapper)
 
@@ -56,12 +56,18 @@ def main():
         try:
             while True:
                 user_input = input(">>> ")
-                resp = agent.start_task(user_input)
-                print("Result: ", resp)
+
+                if len(user_input)<8 and (user_input.lower().startswith('exit') or user_input.lower().startswith('quit')):
+                    break
+
+                if len(user_input)>0:
+                    resp = agent.start_task(user_input)
+                    logger.info(f"Response: {resp}")
+                    print(resp.get('output', ' [[no response]]'))
         except KeyboardInterrupt:
             print(" *** ctrl+c was pressed ***")
 
-    logging.info(f"Shutting down")
+    logger.info(f"Shutting down")
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 from alfred_ai_backend.models.llama_cpp_local.utils import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.llm import LlmWrapper
-from typing import Sequence, Union
+from typing import Sequence, Union, Dict, Any
 from langchain_community.llms import LlamaCpp
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
@@ -11,6 +11,7 @@ from langchain_core.agents import AgentAction, AgentFinish
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers.json import parse_json_markdown
+from langchain.agents import AgentExecutor
 import logging
 
 
@@ -23,7 +24,7 @@ class MistralInstruct(LlmWrapper):
         super().__init__('llama_cpp_local.mistral_instruct')
 
         # Load the model using the model's init config and send any std messages to logger
-        with RedirectStdStreamsToLogger(self._logger):
+        with RedirectStdStreamsToLogger(logger):
             self._config = self.get_model_config()
             self._llm = LlamaCpp(**self.get_init_config())
 
@@ -34,7 +35,7 @@ class MistralInstruct(LlmWrapper):
         return f"{B_INST} {self._config.get('user_prompt')} {E_INST}\n {self._config.get('user_prompt_context')}\n{self.get_response_prefix()}"
 
     def get_response_prefix(self) -> str:
-        return self._config.get('user_prompt_starter_response')
+        return self._config.get('user_prompt_starter_response').strip()
 
     def create_agent(
         self,
@@ -65,33 +66,46 @@ class MistralInstruct(LlmWrapper):
         )
         return agent
     
+    def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
+        with RedirectStdStreamsToLogger(logger):
+            return agent_executor.invoke({"input": user_input}, return_only_outputs=False, stop=['```'])
+    
 
 class MistralJsonOutputParser(JSONAgentOutputParser):
     def __init__(self, llm_wrapper: MistralInstruct):
+        super().__init__()
         # Hack to avoid missing pydantic variable errors
         self.__dict__['_llm_wrapper'] = llm_wrapper
 
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:
         try:
             # Add the json prefix that we added at the end of our user prompt
-            logger.debug(f"Parsing output: {text}")
+            logger.debug(f"Parsing response: {text}")
             response_prefix = self.__dict__['_llm_wrapper'].get_response_prefix().replace('{{','{')
-            text = text.strip().replace(r'\n','')
+            text = text.strip()
             if not text.startswith('```json') and self.__dict__['_llm_wrapper']:
                 text = (response_prefix + text)
-                logger.debug(f"Cleaned: {text.strip()}")
 
             response = parse_json_markdown(text)
-            logger.debug(f"Parsed: {response}")
             if isinstance(response, list):
                 # gpt turbo frequently ignores the directive to emit a single action
                 logger.warning("Got multiple action responses: %s", response)
                 response = response[0]
+
+            # Mistral frequently ignores action_input needing to be a string
+            action_input = response.get("action_input", {})
+            if isinstance(action_input, dict):
+                action_input = action_input.get('values', str(action_input))
+                if isinstance(action_input, list) and len(action_input)>0:
+                    action_input = action_input[0]
+
+            logger.debug(f"Converted action_input to string: {action_input}")
+
             if response["action"] == "Final Answer":
-                return AgentFinish({"output": response["action_input"]}, text)
+                return AgentFinish({"output": action_input}, text)
             else:
                 return AgentAction(
-                    response["action"], response.get("action_input", {}), text
+                    response["action"], action_input, text
                 )
         except Exception as e:
             logger.error(f"Failed to parse with error: {e}")
