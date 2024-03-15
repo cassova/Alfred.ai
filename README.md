@@ -2,6 +2,28 @@
 
 A useful agent that will build entire projects for you in python.
 
+# Installation
+
+TODO
+
+# Getting Started
+
+Run the following:
+
+```bash
+poetry run python -m alfred_ai_backend.start
+```
+
+# ToDos
+- [x] Add Mistral Instruct support
+- [x] Add math support
+- [ ] Add gpt4 support (config switch)
+- [ ] Add internet search
+- [ ] Add file operations
+- [ ] Add console operations (need to create env?)
+
+# Long-Term Goals
+
 What can it do?
 
 - [ ] Developing and debugging code
@@ -14,14 +36,7 @@ What can it do?
 - [ ] Switch between work on different projects
 - [ ] Improve itself
 
-# Installation
+What Features does it have?
 
-TODO
-
-# Getting Started
-
-Run the following:
-
-```bash
-poetry run python -m alfred_ai_backend.start
-```
+- [ ] Web UI
+- [ ] Track token usage (control costs)
