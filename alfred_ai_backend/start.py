@@ -2,7 +2,7 @@ import argparse
 import logging
 from typing import Optional
 from alfred_ai_backend.core.agent import AgentWrapper
-from alfred_ai_backend.config import Config
+from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.models.llama_cpp_local.mistral_instruct import MistralInstruct
 
 logger = logging.getLogger(__name__)
