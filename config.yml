@@ -1,0 +1,17 @@
+logging:
+  level: DEBUG
+  verbose: false
+  file: output2.log
+  format: '%(asctime)s - %(levelname)s - %(message)s'
+
+alfred:
+  default_model: llama_cpp_local.mistral_instruct
+
+# models:
+#   llama_cpp_local.mistral_instruct:
+#     model_path: D:/llama/models/mistral-7b-instruct-v0.2.Q5_K_M.gguf
+#     n_gpu_layers: -1
+#     n_batch: 512
+#     n_ctx: 8000
+#     f16_kv: True
+#     verbose: True

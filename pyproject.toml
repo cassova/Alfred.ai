@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "alfred_ai"
+version = "0.1.0"
+description = "Alfred.ai is an AI agent software engineer"
+authors = ["cassova <miller.nicholas.a@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "alfred_ai_backend" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+langchain = "^0.1.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

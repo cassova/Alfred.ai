@@ -1,0 +1,17 @@
+To run:
+poetry run python -m alfred_ai_backend.start
+
+Llama2 implementation for langchain:
+  https://github.com/pinecone-io/examples/blob/master/learn/generation/llm-field-guide/llama-2/llama-2-70b-chat-agent.ipynb
+
+Mixtral implementation:
+  https://github.com/pinecone-io/examples/blob/master/learn/generation/llm-field-guide/mistral-ai/mixtral-8x7b/00-mixtral-8x7b-agent.ipynb
+
+LangChain: Tavily Search:
+  https://python.langchain.com/docs/integrations/tools/tavily_search
+
+LangChain: Webscrapping:
+  https://python.langchain.com/docs/use_cases/web_scraping
+
+LangChain: Local Models:
+  https://python.langchain.com/docs/use_cases/question_answering/local_retrieval_qa
