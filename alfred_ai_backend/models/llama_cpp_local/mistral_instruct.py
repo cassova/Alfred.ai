@@ -1,4 +1,4 @@
-from alfred_ai_backend.models.llama_cpp_local.utils import RedirectStdStreamsToLogger
+from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.llm import LlmWrapper
 from typing import Sequence, Union, Dict, Any
 from langchain_community.llms import LlamaCpp
