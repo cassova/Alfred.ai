@@ -26,7 +26,7 @@ class MistralInstruct(LlmWrapper):
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
             self._config = self.get_model_config()
-            self._llm = LlamaCpp(**self.get_init_config())
+            self._llm = LlamaCpp(**self._config.get_init_config())
 
     def create_system_prompt_template(self) -> str:
         return f"{B_SYS} {B_INST} {self._config.get('system_prompt_template')} {E_INST} "
@@ -68,7 +68,7 @@ class MistralInstruct(LlmWrapper):
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
         with RedirectStdStreamsToLogger(logger):
-            return agent_executor.invoke({"input": user_input}, **self._config.get('inference'))
+            return agent_executor.invoke({"input": user_input}, **self._config.get_inference_config())
     
 
 class MistralJsonOutputParser(JSONAgentOutputParser):

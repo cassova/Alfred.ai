@@ -16,10 +16,6 @@ class LlmWrapper(ABC):
         self._llm = None
         self._name = name
         self._config = ModelConfig(name)
-    
-    @abstractmethod
-    def message(self):
-        pass
 
     @abstractmethod
     def create_system_prompt_template(self):
@@ -31,9 +27,6 @@ class LlmWrapper(ABC):
 
     def get_model_config(self):
         return self._config
-    
-    def get_init_config(self):
-        return self._config.get('init')
 
     def get_llm(self):
         return self._llm
@@ -51,7 +44,7 @@ class LlmWrapper(ABC):
         )
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
-        return agent_executor.invoke({"input": user_input}, **self._config.get('inference'))
+        return agent_executor.invoke({"input": user_input}, **self._config.get_inference_config())
 
 
 class ModelConfig():
@@ -68,3 +61,9 @@ class ModelConfig():
     
     def get(self, key: str, default: Any = None) -> Any:
         return self.config.get(key, default)
+    
+    def get_init_config(self):
+        return self.config.get('init')
+    
+    def get_inference_config(self):
+        return self.config.get('inference')
