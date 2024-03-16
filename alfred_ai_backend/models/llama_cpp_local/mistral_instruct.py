@@ -25,17 +25,17 @@ class MistralInstruct(LlmWrapper):
 
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
-            self._config = self.get_model_config()
-            self._llm = LlamaCpp(**self._config.get_init_config())
+            self.config = self.get_model_config()
+            self.llm = LlamaCpp(**self.config.get_init_config())
 
     def create_system_prompt_template(self) -> str:
-        return f"{B_SYS} {B_INST} {self._config.get('system_prompt_template')} {E_INST} "
+        return f"{B_SYS} {B_INST} {self.config.get('system_prompt_template')} {E_INST} "
 
     def create_user_prompt_template(self) -> str:
-        return f"{B_INST} {self._config.get('user_prompt')} {E_INST}\n {self._config.get('user_prompt_context')}\n{self.get_response_prefix()}"
+        return f"{B_INST} {self.config.get('user_prompt')} {E_INST}\n {self.config.get('user_prompt_context')}\n{self.get_response_prefix()}"
 
     def get_response_prefix(self) -> str:
-        return self._config.get('user_prompt_starter_response').strip()
+        return self.config.get('user_prompt_starter_response').strip()
 
     def create_agent(
         self,
@@ -54,7 +54,7 @@ class MistralInstruct(LlmWrapper):
             tools=tools_renderer(list(tools)),
             tool_names=", ".join([t.name for t in tools]),
         )
-        llm_with_stop = self._llm.bind(stop=["Observation"])
+        llm_with_stop = self.llm.bind(stop=["Observation"])
 
         agent = (
             RunnablePassthrough.assign(
@@ -68,7 +68,7 @@ class MistralInstruct(LlmWrapper):
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
         with RedirectStdStreamsToLogger(logger):
-            return agent_executor.invoke({"input": user_input}, **self._config.get_inference_config())
+            return agent_executor.invoke({"input": user_input}, **self.config.get_inference_config())
     
 
 class MistralJsonOutputParser(JSONAgentOutputParser):

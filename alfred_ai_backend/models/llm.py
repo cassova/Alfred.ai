@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 
 class LlmWrapper(ABC):
     def __init__(self, name: str):
-        self._llm = None
-        self._name = name
-        self._config = ModelConfig(name)
+        self.llm = None
+        self.name = name
+        self.config = ModelConfig(name)
 
     @abstractmethod
     def create_system_prompt_template(self):
@@ -26,10 +26,10 @@ class LlmWrapper(ABC):
         pass
 
     def get_model_config(self):
-        return self._config
+        return self.config
 
     def get_llm(self):
-        return self._llm
+        return self.llm
     
     def create_agent(self,
         tools: Sequence[BaseTool],
@@ -37,14 +37,14 @@ class LlmWrapper(ABC):
         tools_renderer: ToolsRenderer = render_text_description_and_args,
     ):
         return create_structured_chat_agent(
-            llm=self._llm,
+            llm=self.llm,
             tools=tools,
             prompt=prompt,
             tools_renderer=tools_renderer
         )
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
-        return agent_executor.invoke({"input": user_input}, **self._config.get_inference_config())
+        return agent_executor.invoke({"input": user_input}, **self.config.get_inference_config())
 
 
 class ModelConfig():
