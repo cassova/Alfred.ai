@@ -21,7 +21,7 @@ B_SYS, E_SYS = "<s> ", " </s>"
 
 class MistralInstruct(LlmWrapper):
     def __init__(self):
-        super().__init__('llama_cpp_local.mistral_instruct')
+        super().__init__(__name__)
 
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
@@ -43,7 +43,7 @@ class MistralInstruct(LlmWrapper):
         prompt: ChatPromptTemplate,
         tools_renderer: ToolsRenderer = render_text_description_and_args,
     ) -> Runnable:
-        # This is based on langchain.agents.create_structured_chat_agent
+        # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
         missing_vars = {"tools", "tool_names", "agent_scratchpad"}.difference(
             prompt.input_variables
         )
@@ -68,7 +68,7 @@ class MistralInstruct(LlmWrapper):
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
         with RedirectStdStreamsToLogger(logger):
-            return agent_executor.invoke({"input": user_input}, return_only_outputs=False, stop=['```'])
+            return agent_executor.invoke({"input": user_input}, **self._config.get('inference'))
     
 
 class MistralJsonOutputParser(JSONAgentOutputParser):

@@ -6,11 +6,15 @@ init:
   f16_kv: True
   verbose: True
   temperature: 0
-  # stop:
-  #  -  '```'
-  #  - '<\s>'
-  #  - 'Assistant: '
-  #  - 'Human: '
+
+inference:
+  stop:
+   -  '```'
+   - '<\s>'
+   - 'Assistant: '
+   - 'Human: '
+  return_only_outputs: False
+
 user_prompt: 'User: {input}'
 user_prompt_context: |
   {agent_scratchpad}
