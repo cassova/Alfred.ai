@@ -25,25 +25,16 @@ class MistralInstruct(LlmWrapper):
 
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
-            self.config = self.get_model_config()
-            self.llm = LlamaCpp(**self.config.get_init_config())
-
-    def create_system_prompt_template(self) -> str:
-        return f"{B_SYS} {B_INST} {self.config.get('system_prompt_template')} {E_INST} "
-
-    def create_user_prompt_template(self) -> str:
-        return f"{B_INST} {self.config.get('user_prompt')} {E_INST}\n {self.config.get('user_prompt_context')}\n{self.get_response_prefix()}"
-
-    def get_response_prefix(self) -> str:
-        return self.config.get('user_prompt_starter_response').strip()
+            self.model_config = self.get_model_config()
+            self.llm = LlamaCpp(**self.model_config.get_init_config())
 
     def create_agent(
         self,
         tools: Sequence[BaseTool],
-        prompt: ChatPromptTemplate,
         tools_renderer: ToolsRenderer = render_text_description_and_args,
     ) -> Runnable:
         # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
+        prompt = self._create_prompt_template()
         missing_vars = {"tools", "tool_names", "agent_scratchpad"}.difference(
             prompt.input_variables
         )
@@ -68,7 +59,24 @@ class MistralInstruct(LlmWrapper):
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
         with RedirectStdStreamsToLogger(logger):
-            return agent_executor.invoke({"input": user_input}, **self.config.get_inference_config())
+            return agent_executor.invoke({"input": user_input}, **self.model_config.get_inference_config())
+        
+
+    def _create_system_prompt_template(self) -> str:
+        return f"{B_SYS} {B_INST} {self.model_config.get('system_prompt_template')} {E_INST} "
+
+    def _create_user_prompt_template(self) -> str:
+        return f"{B_INST} {self.model_config.get('user_prompt')} {E_INST}\n {self.model_config.get('user_prompt_context')}\n{self._get_response_prefix()}"
+    
+    def _get_response_prefix(self) -> str:
+        return self.model_config.get('user_prompt_starter_response').strip()
+
+    def _create_prompt_template(self) -> ChatPromptTemplate:
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", self._create_system_prompt_template()),
+            ("human", self._create_user_prompt_template()),
+        ])
+        return prompt
     
 
 class MistralJsonOutputParser(JSONAgentOutputParser):
@@ -81,7 +89,7 @@ class MistralJsonOutputParser(JSONAgentOutputParser):
         try:
             # Add the json prefix that we added at the end of our user prompt
             logger.debug(f"Parsing response: {text}")
-            response_prefix = self.__dict__['_llm_wrapper'].get_response_prefix().replace('{{','{')
+            response_prefix = self.__dict__['_llm_wrapper']._get_response_prefix().replace('{{','{')
             text = text.strip()
             if not text.startswith('```json') and self.__dict__['_llm_wrapper']:
                 text = (response_prefix + text)
