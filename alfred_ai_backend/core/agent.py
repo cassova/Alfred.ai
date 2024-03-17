@@ -3,18 +3,26 @@ from langchain.agents import load_tools, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Any
 import logging
+from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.models.llm import LlmWrapper
 from langchain_experimental.tools import PythonREPLTool
+from langchain.globals import set_verbose, set_debug
 
 
 logger = logging.getLogger(__name__)
 
 # Source: https://github.com/pinecone-io/examples/blob/master/learn/generation/llm-field-guide/llama-2/llama-2-70b-chat-agent.ipynb
 class AgentWrapper():
-    def __init__(self, llm_wrapper: LlmWrapper):
+    def __init__(self, config: Config, llm_wrapper: LlmWrapper):
         # TODO: remove most of these `self` things since we don't need them
+        self.config = config
         self.llm_wrapper = llm_wrapper
         self.llm = self.llm_wrapper.get_llm()
+
+        if config.get('enable_langchain_debug_mode', False):
+            set_debug(True)
+        if config.get('enable_langchain_verbose_mode', False):
+            set_verbose(True)
 
         self._memory = ConversationBufferWindowMemory(
             memory_key="chat_history", k=5, return_messages=True, output_key="output"
@@ -23,10 +31,7 @@ class AgentWrapper():
         self._tools = self._tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
             
         # initialize agent
-        self._agent = self.llm_wrapper.create_agent(
-            tools=self._tools,
-            prompt=self._load_prompt_from_config(),
-        )
+        self._agent = self.llm_wrapper.create_agent(self._tools)
 
         # initialize executor
         self._agent_executor = AgentExecutor(
@@ -37,13 +42,6 @@ class AgentWrapper():
             early_stopping_method="generate",
             memory=self._memory,
         )
-
-    def _load_prompt_from_config(self) -> ChatPromptTemplate:
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", self.llm_wrapper.create_system_prompt_template()),
-            ("human", self.llm_wrapper.create_user_prompt_template()),
-        ])
-        return prompt
 
     def start_task(self, user_input_str: str) -> Dict[str, Any]:
         logger.info("*** Starting task ***")

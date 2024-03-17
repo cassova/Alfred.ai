@@ -20,3 +20,6 @@ class Config(metaclass=SingletonMeta):
     
     def get(self, key: str, default: Any = None) -> Any:
         return self.config.get(key, default)
+    
+    def __contains__(self, key):
+        return key in self.config

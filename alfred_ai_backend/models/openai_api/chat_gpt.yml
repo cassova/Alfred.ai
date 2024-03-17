@@ -1,0 +1,9 @@
+init:
+  model: gpt-3.5-turbo
+  temperature: 0
+
+inference:
+
+user_prompt: '{input}'
+system_prompt_template: |
+  You are Alfred.ai, an expert python software developer. Respond to the human as helpfully and accurately as possible.
