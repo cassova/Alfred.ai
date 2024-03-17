@@ -1,17 +1,16 @@
 from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.llm import LlmWrapper
-from typing import Sequence, Union, Dict, Any
+from typing import Sequence, Union
 from langchain_community.llms import LlamaCpp
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
-from langchain_core.prompts.chat import ChatPromptTemplate
+from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from langchain.agents.output_parsers import JSONAgentOutputParser
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers.json import parse_json_markdown
-from langchain.agents import AgentExecutor
 import logging
 
 
@@ -35,7 +34,7 @@ class MistralInstruct(LlmWrapper):
     ) -> Runnable:
         # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
         prompt = self._create_prompt_template()
-        missing_vars = {"tools", "tool_names", "agent_scratchpad"}.difference(
+        missing_vars = {"tools", "tool_names", "chat_history", "agent_scratchpad", "input"}.difference(
             prompt.input_variables
         )
         if missing_vars:
@@ -56,12 +55,7 @@ class MistralInstruct(LlmWrapper):
             | MistralJsonOutputParser(self)
         )
         return agent
-    
-    def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
-        with RedirectStdStreamsToLogger(logger):
-            return agent_executor.invoke({"input": user_input}, **self.model_config.get_inference_config())
         
-
     def _create_system_prompt_template(self) -> str:
         return f"{B_SYS} {B_INST} {self.model_config.get('system_prompt_template')} {E_INST} "
 
@@ -73,8 +67,18 @@ class MistralInstruct(LlmWrapper):
 
     def _create_prompt_template(self) -> ChatPromptTemplate:
         prompt = ChatPromptTemplate.from_messages([
-            ("system", self._create_system_prompt_template()),
-            ("human", self._create_user_prompt_template()),
+            SystemMessagePromptTemplate(
+                prompt=PromptTemplate(
+                    input_variables=['tools', 'tool_names'],
+                    template=self._create_system_prompt_template()
+                )
+            ),
+            HumanMessagePromptTemplate(
+                prompt=PromptTemplate(
+                    input_variables=['input', 'chat_history', 'agent_scratchpad'],
+                    template=self._create_user_prompt_template()
+                )
+            ),
         ])
         return prompt
     

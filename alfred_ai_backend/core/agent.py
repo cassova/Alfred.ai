@@ -15,32 +15,34 @@ logger = logging.getLogger(__name__)
 class AgentWrapper():
     def __init__(self, config: Config, llm_wrapper: LlmWrapper):
         # TODO: remove most of these `self` things since we don't need them
-        self.config = config
         self.llm_wrapper = llm_wrapper
-        self.llm = self.llm_wrapper.get_llm()
 
         if config.get('enable_langchain_debug_mode', False):
             set_debug(True)
         if config.get('enable_langchain_verbose_mode', False):
             set_verbose(True)
 
-        self._memory = ConversationBufferWindowMemory(
+        memory = ConversationBufferWindowMemory(
             memory_key="chat_history", k=5, return_messages=True, output_key="output"
         )
-        self._tools = load_tools(["llm-math", "terminal"], llm=self.llm, allow_dangerous_tools=True)
-        self._tools = self._tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
+        tools = load_tools(
+            ["llm-math", "terminal"],
+            llm=self.llm_wrapper.get_llm(),
+            allow_dangerous_tools=True
+        )
+        tools = tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
             
         # initialize agent
-        self._agent = self.llm_wrapper.create_agent(self._tools)
+        agent = self.llm_wrapper.create_agent(tools)
 
         # initialize executor
         self._agent_executor = AgentExecutor(
-            agent=self._agent,
-            tools=self._tools,
+            agent=agent,
+            tools=tools,
             verbose=True,
             handle_parsing_errors=True,
             early_stopping_method="generate",
-            memory=self._memory,
+            memory=memory,
         )
 
     def start_task(self, user_input_str: str) -> Dict[str, Any]:

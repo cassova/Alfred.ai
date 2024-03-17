@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 class LlmWrapper(ABC):
     def __init__(self, model_file_name: str):
         self.llm = None
-        self.model_file_name = model_file_name
         self.model_config = ModelConfig(model_file_name)
 
     def get_model_config(self):
@@ -40,8 +39,8 @@ class LlmWrapper(ABC):
 
 class ModelConfig():
     def __init__(self, model_file_name: str):
+        model_config_file_name = model_file_name.replace('.py','.yml')
         try:
-            model_config_file_name = model_file_name.replace('.py','.yml')
             with open(model_config_file_name, 'r') as f:
                 self.config = yaml.safe_load(f)
             logger.info(f"Loaded model config from here: {model_config_file_name}")

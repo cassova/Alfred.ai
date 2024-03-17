@@ -25,7 +25,7 @@ def configure_logger(config: Config, debug_mode: bool, log_file: Optional[str]=N
         handlers.append(logging.StreamHandler())
     log_file = log_file if log_file else log_config['file']
     if log_file:
-        handlers.append(logging.FileHandler(log_file))
+        handlers.append(logging.FileHandler(log_file, 'w'))
 
     if len(handlers)==0: return
 
@@ -43,8 +43,8 @@ def get_model_class(config: Config, model: Optional[str] = 'default_model') -> L
         model (Optional[str], optional): The model load. Defaults to 'default_model'.
 
     Raises:
-        Exception: If the configuration is missing a definition for all models
-        Exception: if the configuration is missing the specified model's definition
+        KeyError: If the configuration is missing a definition for all models
+        KeyError: if the configuration is missing the specified model's definition
 
     Returns:
         Type[LlmWrapper]: A subclass of LlmWrapper
@@ -53,11 +53,11 @@ def get_model_class(config: Config, model: Optional[str] = 'default_model') -> L
     if all_models_config == None:
         error = "Missing configuration for models"
         logger.error(error)
-        raise Exception(error)
+        raise KeyError(error)
     if model not in all_models_config:
         error = f"Unable to activate {model} because it's not defined in the config"
         logger.error(error)
-        raise Exception(error)
+        raise KeyError(error)
     
     class_name = all_models_config[model].get('name')
     module_name = all_models_config[model].get('module')

@@ -17,6 +17,7 @@ inference:
 
 user_prompt: 'User: {input}'
 user_prompt_context: |
+  {chat_history}
   {agent_scratchpad}
   Assistant: 
 user_prompt_starter_response: |
