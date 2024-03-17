@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Any
 import logging
 from alfred_ai_backend.models.llm import LlmWrapper
+from langchain_experimental.tools import PythonREPLTool
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,8 @@ class AgentWrapper():
         self._memory = ConversationBufferWindowMemory(
             memory_key="chat_history", k=5, return_messages=True, output_key="output"
         )
-        self._tools = load_tools(["llm-math"], llm=self.llm)
+        self._tools = load_tools(["llm-math", "terminal"], llm=self.llm, allow_dangerous_tools=True)
+        self._tools = self._tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
             
         # initialize agent
         self._agent = self.llm_wrapper.create_agent(
