@@ -21,7 +21,7 @@ B_SYS, E_SYS = "<s> ", " </s>"
 
 class MistralInstruct(LlmWrapper):
     def __init__(self):
-        super().__init__(__name__)
+        super().__init__(__file__)
 
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):

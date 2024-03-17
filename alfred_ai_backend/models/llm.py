@@ -12,10 +12,10 @@ import alfred_ai_backend
 logger = logging.getLogger(__name__)
 
 class LlmWrapper(ABC):
-    def __init__(self, name: str):
+    def __init__(self, model_file_name: str):
         self.llm = None
-        self.name = name
-        self.config = ModelConfig(name)
+        self.model_file_name = model_file_name
+        self.config = ModelConfig(model_file_name)
 
     @abstractmethod
     def create_system_prompt_template(self):
@@ -48,15 +48,14 @@ class LlmWrapper(ABC):
 
 
 class ModelConfig():
-    def __init__(self, name: str):
-        base_dir = alfred_ai_backend.__path__
+    def __init__(self, model_file_name: str):
         try:
-            model_config_path = os.path.join(*base_dir + name.split('.')[1:]) + '.yml'
-            with open(model_config_path, 'r') as f:
+            model_config_file_name = model_file_name.replace('.py','.yml')
+            with open(model_config_file_name, 'r') as f:
                 self.config = yaml.safe_load(f)
-            logger.info(f"Loaded model config from here: {model_config_path}")
+            logger.info(f"Loaded model config from here: {model_config_file_name}")
         except Exception as e:
-            logger.error(f"Unable to load model config.  Exepected location: [{model_config_path}]  Error message: {e}")
+            logger.error(f"Unable to load model config.  Exepected location: [{model_config_file_name}]  Error message: {e}")
             raise
     
     def get(self, key: str, default: Any = None) -> Any:
