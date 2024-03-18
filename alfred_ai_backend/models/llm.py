@@ -2,17 +2,19 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Sequence
 import logging
 import yaml
-from langchain.agents import AgentExecutor, create_structured_chat_agent
+from langchain.agents import AgentExecutor
 from langchain_core.tools import BaseTool
-from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
+from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
+#from langchain_community.callbacks import wandb_tracing_enabled
 
 logger = logging.getLogger(__name__)
 
 class LlmWrapper(ABC):
-    def __init__(self, model_file_name: str):
+    def __init__(self, model_file_name: str, config: Config):
         self.llm = None
+        self.config = config
         self.model_config = ModelConfig(model_file_name)
 
     def get_model_config(self):
@@ -30,6 +32,7 @@ class LlmWrapper(ABC):
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
         with RedirectStdStreamsToLogger(logger):
+            #with wandb_tracing_enabled():
             inference_config = self.model_config.get_inference_config()
             if inference_config:
                 return agent_executor.invoke({"input": user_input}, **inference_config)

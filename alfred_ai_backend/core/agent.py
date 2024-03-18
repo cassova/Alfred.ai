@@ -6,6 +6,7 @@ import logging
 from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.models.llm import LlmWrapper
 from langchain_experimental.tools import PythonREPLTool
+from langchain_community.agent_toolkits import FileManagementToolkit
 from langchain.globals import set_verbose, set_debug
 
 
@@ -16,6 +17,7 @@ class AgentWrapper():
     def __init__(self, config: Config, llm_wrapper: LlmWrapper):
         # TODO: remove most of these `self` things since we don't need them
         self.llm_wrapper = llm_wrapper
+        self.config = config
 
         if config.get('enable_langchain_debug_mode', False):
             set_debug(True)
@@ -26,11 +28,15 @@ class AgentWrapper():
             memory_key="chat_history", k=5, return_messages=True, output_key="output"
         )
         tools = load_tools(
-            ["llm-math", "terminal"],
+            ["llm-math", "terminal", "human"],
             llm=self.llm_wrapper.get_llm(),
             allow_dangerous_tools=True
         )
-        tools = tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
+        file_toolkit = FileManagementToolkit(
+            root_dir=str(config.get('root_folder'))
+        )
+        tools += file_toolkit.get_tools()
+        #tools = tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
             
         # initialize agent
         agent = self.llm_wrapper.create_agent(tools)

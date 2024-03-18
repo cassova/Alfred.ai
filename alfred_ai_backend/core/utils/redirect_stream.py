@@ -11,7 +11,7 @@ class StreamToLogger(object):
         self.linebuf = ''
 
     def write(self, buf):
-        for line in buf.rstrip().splitlines():
+        for line in str(buf).rstrip().splitlines():
             if len(line) > 2:  # Skip some superficial messaging like '.' progress indicators
                 self.logger.log(self.log_level, line.rstrip())
 

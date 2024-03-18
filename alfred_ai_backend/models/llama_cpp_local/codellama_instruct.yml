@@ -1,8 +1,9 @@
 init:
-  model_path: D:/llama/models/mistral-7b-instruct-v0.2.Q5_K_M.gguf
+  #model_path: D:/llama/models/codellama-7b-instruct.Q5_K_M.gguf
+  model_path: D:/llama/models/codellama-7b-python.Q5_K_M.gguf
   n_gpu_layers: -1
   n_batch: 512
-  n_ctx: 8000
+  n_ctx: 4000
   f16_kv: True
   verbose: True
   temperature: 0
@@ -11,12 +12,14 @@ inference:
   stop:
    -  '```'
    - '<\s>'
-   - 'Human: '
   return_only_outputs: False
 
-user_prompt_context: '{chat_history}'
-user_prompt: 'Human: {input}'
-user_prompt_scratch_pad: '{agent_scratchpad}'
+user_prompt: |
+  User: {input}
+  Alfred.ai: 
+user_prompt_context: |
+  {chat_history}
+  {agent_scratchpad}
 user_prompt_starter_response: |
   ```json
   {{
@@ -28,18 +31,20 @@ system_prompt_template: |
 
   Use a json blob to specify a tool by providing an action key (tool name) and an action_input key (tool input).
 
+  Valid "action" values: "Final Answer" or {tool_names}
+
   Provide only ONE action per $JSON_BLOB and output ONLY this format:
 
   ```json
   {{
-    "action": $TOOL_NAME_STRING,  # valid actions values: {tool_names} or "Final Answer"
+    "action": $TOOL_NAME_STRING,
     "action_input": $INPUT_STRING
   }}
   ```
 
   Follow this format:
 
-  Human: input question to answer
+  Question: input question to answer
   Thought: consider previous and subsequent steps
   Action:
   ```
@@ -56,4 +61,4 @@ system_prompt_template: |
   }}
   ```
 
-  Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools to provide better answers. Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation: text
+  Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:```$JSON_BLOB```then Observation

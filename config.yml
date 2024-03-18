@@ -1,6 +1,6 @@
 logging:
   level: DEBUG
-  verbose: false
+  verbose: False
   file: output2.log
   format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
@@ -11,8 +11,12 @@ models:
   llama_cpp_local.mistral_instruct:
     name: MistralInstruct
     module: alfred_ai_backend.models.llama_cpp_local.mistral_instruct
+  llama_cpp_local.codellama_instruct:
+    name: CodeLlamaInstruct
+    module: alfred_ai_backend.models.llama_cpp_local.codellama_instruct
   openai_api.chat_gpt:
     name: ChatGpt
     module: alfred_ai_backend.models.openai_api.chat_gpt
 enable_langchain_debug_mode: True
-enable_langchain_verbose_mode: True
+enable_langchain_verbose_mode: False
+root_folder: D:\Temp\alfred_dump

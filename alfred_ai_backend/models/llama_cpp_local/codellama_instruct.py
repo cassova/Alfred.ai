@@ -17,11 +17,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 B_INST, E_INST = "[INST]", "[/INST]"
+B_SYS, E_SYS = "<<SYS>>", "<<SYS>>"
 BOS, EOS = "<s> ", " </s>"
 
-class MistralInstruct(LlmWrapper):
+class CodeLlamaInstruct(LlmWrapper):
     def __init__(self, config: Config):
         super().__init__(__file__, config)
+
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
             self.model_config = self.get_model_config()
@@ -32,7 +34,7 @@ class MistralInstruct(LlmWrapper):
         tools: Sequence[BaseTool],
         tools_renderer: ToolsRenderer = render_text_description_and_args,
     ) -> Runnable:
-        # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
+        # This is based on langchain.agents.create_structured_chat_agent but customized for CodeLlama
         prompt = self._create_prompt_template()
         missing_vars = {"tools", "tool_names", "chat_history", "agent_scratchpad", "input"}.difference(
             prompt.input_variables
@@ -52,16 +54,15 @@ class MistralInstruct(LlmWrapper):
             )
             | prompt
             | llm_with_stop
-            | MistralJsonOutputParser(self)
+            | CodeLlamaJsonOutputParser(self)
         )
         return agent
         
     def _create_system_prompt_template(self) -> str:
-        return f"{BOS} {B_INST} {self.model_config.get('system_prompt_template')} {E_INST}"
+        return f"{BOS} {B_INST} {B_SYS} {self.model_config.get('system_prompt_template')} {E_SYS} "
 
     def _create_user_prompt_template(self) -> str:
-        #return f"{self.model_config.get('user_prompt_context')}\n{self.model_config.get('user_prompt')} {E_INST}\n{self._get_response_prefix()}"
-        return f"{self.model_config.get('user_prompt_context')}\n{B_INST} {self.model_config.get('user_prompt')} {E_INST}\n{self.model_config.get('user_prompt_scratch_pad')}"
+        return f"{self.model_config.get('user_prompt_context')}\n{self.model_config.get('user_prompt')} {E_INST}\n{self._get_response_prefix()}"
     
     def _get_response_prefix(self) -> str:
         return self.model_config.get('user_prompt_starter_response').strip()
@@ -84,8 +85,8 @@ class MistralInstruct(LlmWrapper):
         return prompt
     
 
-class MistralJsonOutputParser(JSONAgentOutputParser):
-    def __init__(self, llm_wrapper: MistralInstruct):
+class CodeLlamaJsonOutputParser(JSONAgentOutputParser):
+    def __init__(self, llm_wrapper: CodeLlamaInstruct):
         super().__init__()
         # Hack to avoid missing pydantic variable errors
         self.__dict__['_llm_wrapper'] = llm_wrapper
@@ -94,14 +95,12 @@ class MistralJsonOutputParser(JSONAgentOutputParser):
         try:
             # Add the json prefix that we added at the end of our user prompt
             logger.debug(f"Parsing response: {text}")
-            # response_prefix = self.__dict__['_llm_wrapper']._get_response_prefix().replace('{{','{')
-            # text = text.strip()
-            # if not text.startswith('```json') and self.__dict__['_llm_wrapper']:
-            #     text = (response_prefix + text)
+            response_prefix = self.__dict__['_llm_wrapper']._get_response_prefix().replace('{{','{')
+            text = text.strip()
+            if not text.startswith('```json') and self.__dict__['_llm_wrapper']:
+                text = (response_prefix + text)
 
             response = parse_json_markdown(text)
-            logger.debug(f"Parsed response: {response}")
-
             if isinstance(response, list):
                 # gpt turbo frequently ignores the directive to emit a single action
                 logger.warning("Got multiple action responses: %s", response)
@@ -109,10 +108,10 @@ class MistralJsonOutputParser(JSONAgentOutputParser):
 
             # Mistral frequently ignores action_input needing to be a string
             action_input = response.get("action_input", {})
-            # if isinstance(action_input, dict):
-            #     action_input = action_input.get('values', str(action_input))
-            #     if isinstance(action_input, list) and len(action_input)>0:
-            #         action_input = action_input[0]
+            if isinstance(action_input, dict):
+                action_input = action_input.get('values', str(action_input))
+                if isinstance(action_input, list) and len(action_input)>0:
+                    action_input = action_input[0]
 
             logger.debug(f"Converted action_input to string: {action_input}")
 

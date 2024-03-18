@@ -5,7 +5,7 @@ import importlib
 from alfred_ai_backend.core.agent import AgentWrapper
 from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.models.llm import LlmWrapper
-from alfred_ai_backend.models.llama_cpp_local.mistral_instruct import MistralInstruct
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def get_model_class(config: Config, model: Optional[str] = 'default_model') -> L
         raise
 
     logger.info(f"Loaded model {module_name}")
-    return getattr(module, class_name)()
+    return getattr(module, class_name)(config)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -86,6 +86,7 @@ def main():
     configure_logger(config, args.debug, args.log_file)
 
     logger.info(f"Starting Alfred.ai")
+    os.environ["WANDB_PROJECT"] = "langchain_alfred"
     llm_wrapper = get_model_class(config, args.model)
     agent = AgentWrapper(config, llm_wrapper)
 
