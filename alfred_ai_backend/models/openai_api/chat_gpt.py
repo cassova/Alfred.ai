@@ -1,15 +1,15 @@
-from typing import Sequence, Dict, Any
-from langchain.agents import create_openai_functions_agent
+from typing import Sequence, Dict, Any, Optional
+from langchain.agents import AgentExecutor, create_openai_tools_agent, load_tools
 from langchain_core.runnables import Runnable
 from langchain_core.tools import BaseTool
 from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 import logging
 from langchain_community.callbacks import get_openai_callback
-from langchain.agents import AgentExecutor
 from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.models.llm import LlmWrapper
 from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
+from langchain_community.agent_toolkits import FileManagementToolkit
 
 
 logger = logging.getLogger(__name__)
@@ -29,11 +29,61 @@ class ChatGpt(LlmWrapper):
 
         self.model_config = self.get_model_config()
         self.llm = ChatOpenAI(**self.model_config.get_init_config())
+
+    def create_coder_agent_executor(self) -> AgentExecutor:
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=[], template=self.model_config.get('coder_system_prompt'))),
+            HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self.model_config.get('coder_user_prompt'))),
+            MessagesPlaceholder(variable_name='agent_scratchpad')
+        ])
+        tools = load_tools(
+            ["llm-math", "terminal"],
+            llm=self.get_llm(),
+            allow_dangerous_tools=True
+        )
+        file_toolkit = FileManagementToolkit(
+            root_dir=str(self.config.get('root_folder'))
+        )
+        tools += file_toolkit.get_tools()
+        agent = create_openai_tools_agent(self.llm, tools, prompt)
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            early_stopping_method="generate",
+        )
+        return agent_executor
+
+    def create_reviewer_agent_executor(self) -> AgentExecutor:
+        prompt = ChatPromptTemplate.from_messages([
+            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=[], template=self.model_config.get('reviewer_system_prompt'))),
+            HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self.model_config.get('reviewer_user_prompt'))),
+            MessagesPlaceholder(variable_name='agent_scratchpad')
+        ])
+        tools = load_tools(
+            ["llm-math", "terminal"],
+            llm=self.get_llm(),
+            allow_dangerous_tools=True
+        )
+        file_toolkit = FileManagementToolkit(
+            root_dir=str(self.config.get('root_folder'))
+        )
+        tools += file_toolkit.get_tools()
+        agent = create_openai_tools_agent(self.llm, tools, prompt)
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            early_stopping_method="generate",
+        )
+        return agent_executor
     
     def create_agent(
         self,
         tools: Sequence[BaseTool],
-        tools_renderer: ToolsRenderer = render_text_description_and_args,
+        tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
     ) -> Runnable:
 
         prompt = ChatPromptTemplate.from_messages([
@@ -46,8 +96,10 @@ class ChatGpt(LlmWrapper):
         prompt = prompt.partial(
             cwd=self.config.get('root_folder'),
         )
-
-        agent = create_openai_functions_agent(self.llm, tools, prompt)
+        # for tool in tools:
+        #     print(f"Tooling = {tool} type={type(tool)}")
+        agent = create_openai_tools_agent(self.llm, tools, prompt)
+        #agent = create_openai_functions_agent(self.llm, tools, prompt) # This is considered legacy
         return agent
 
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:

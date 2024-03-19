@@ -1,7 +1,7 @@
 from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.llm import LlmWrapper
-from typing import Sequence, Union
+from typing import Sequence, Union, Optional
 from langchain_community.llms import LlamaCpp
 from langchain_core.runnables import Runnable, RunnablePassthrough
 from langchain_core.tools import BaseTool
@@ -30,7 +30,7 @@ class MistralInstruct(LlmWrapper):
     def create_agent(
         self,
         tools: Sequence[BaseTool],
-        tools_renderer: ToolsRenderer = render_text_description_and_args,
+        tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
     ) -> Runnable:
         # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
         prompt = self._create_prompt_template()

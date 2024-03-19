@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Sequence
+from typing import Any, Dict, Sequence, Optional
 import logging
 import yaml
 from langchain.agents import AgentExecutor
 from langchain_core.tools import BaseTool
+from langchain_core.runnables import Runnable
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from alfred_ai_backend.core.config import Config
 from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
@@ -24,10 +25,18 @@ class LlmWrapper(ABC):
         return self.llm
     
     @abstractmethod
+    def create_coder_agent_executor(self) -> AgentExecutor:
+        pass
+    
+    @abstractmethod
+    def create_reviewer_agent_executor(self) -> AgentExecutor:
+        pass
+
+    @abstractmethod
     def create_agent(self,
         tools: Sequence[BaseTool],
-        tools_renderer: ToolsRenderer = render_text_description_and_args,
-    ):
+        tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
+    ) -> Runnable:
         pass
     
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
