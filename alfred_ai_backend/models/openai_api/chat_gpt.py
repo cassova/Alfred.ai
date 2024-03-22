@@ -32,7 +32,7 @@ class ChatGpt(LlmWrapper):
 
     def create_coder_agent_executor(self) -> AgentExecutor:
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=[], template=self.model_config.get('coder_system_prompt'))),
+            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=['cwd'], template=self.model_config.get('coder_system_prompt'))),
             HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self.model_config.get('coder_user_prompt'))),
             MessagesPlaceholder(variable_name='agent_scratchpad')
         ])
@@ -55,10 +55,10 @@ class ChatGpt(LlmWrapper):
         )
         return agent_executor
 
-    def create_reviewer_agent_executor(self) -> AgentExecutor:
+    def create_tester_agent_executor(self) -> AgentExecutor:
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=[], template=self.model_config.get('reviewer_system_prompt'))),
-            HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self.model_config.get('reviewer_user_prompt'))),
+            SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=[], template=self.model_config.get('tester_system_prompt'))),
+            HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self.model_config.get('tester_user_prompt'))),
             MessagesPlaceholder(variable_name='agent_scratchpad')
         ])
         tools = load_tools(
@@ -96,23 +96,20 @@ class ChatGpt(LlmWrapper):
         prompt = prompt.partial(
             cwd=self.config.get('root_folder'),
         )
-        # for tool in tools:
-        #     print(f"Tooling = {tool} type={type(tool)}")
         agent = create_openai_tools_agent(self.llm, tools, prompt)
-        #agent = create_openai_functions_agent(self.llm, tools, prompt) # This is considered legacy
         return agent
 
     def invoke_agent_executor(self, agent_executor: AgentExecutor, user_input: str) -> Dict[str, Any]:
-        with RedirectStdStreamsToLogger(logger):
-            with get_openai_callback() as cb:
-                inference_config = self.model_config.get_inference_config()
-                if inference_config:
-                    response = agent_executor.invoke({"input": user_input}, **inference_config)
-                else:
-                    response = agent_executor.invoke({"input": user_input})
-                
-                logger.info(f"Total Tokens: {cb.total_tokens}")
-                logger.info(f"Prompt Tokens: {cb.prompt_tokens}")
-                logger.info(f"Completion Tokens: {cb.completion_tokens}")
-                logger.info(f"Total Cost (USD): ${cb.total_cost}")
-                return response
+        #with RedirectStdStreamsToLogger(logger):
+        with get_openai_callback() as cb:
+            inference_config = self.model_config.get_inference_config()
+            if inference_config:
+                response = agent_executor.invoke({"input": user_input}, **inference_config)
+            else:
+                response = agent_executor.invoke({"input": user_input})
+            
+            logger.info(f"Total Tokens: {cb.total_tokens}")
+            logger.info(f"Prompt Tokens: {cb.prompt_tokens}")
+            logger.info(f"Completion Tokens: {cb.completion_tokens}")
+            logger.info(f"Total Cost (USD): ${cb.total_cost}")
+            return response

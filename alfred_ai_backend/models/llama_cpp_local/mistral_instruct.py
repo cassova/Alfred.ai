@@ -88,6 +88,7 @@ class MistralJsonOutputParser(JSONAgentOutputParser):
     def __init__(self, llm_wrapper: MistralInstruct):
         super().__init__()
         # Hack to avoid missing pydantic variable errors
+        # TODO: change this to a pydantic PrivateAttr
         self.__dict__['_llm_wrapper'] = llm_wrapper
 
     def parse(self, text: str) -> Union[AgentAction, AgentFinish]:

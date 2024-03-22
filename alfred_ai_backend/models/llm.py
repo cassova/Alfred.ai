@@ -29,7 +29,7 @@ class LlmWrapper(ABC):
         pass
     
     @abstractmethod
-    def create_reviewer_agent_executor(self) -> AgentExecutor:
+    def create_tester_agent_executor(self) -> AgentExecutor:
         pass
 
     @abstractmethod

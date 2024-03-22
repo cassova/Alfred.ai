@@ -4,8 +4,8 @@ from langchain.agents import load_tools, AgentExecutor
 from typing import Dict, Any, List
 import logging
 from alfred_ai_backend.core.config import Config
-from alfred_ai_backend.core.utils.code_reviewer_tool import get_code_reviewer_tool
-from alfred_ai_backend.core.utils.code_writer_tool import get_code_writer_tool
+from alfred_ai_backend.core.utils.code_tester_tool import CodeTesterTool
+from alfred_ai_backend.core.utils.code_writer_tool import CodeWriterTool
 from alfred_ai_backend.models.llm import LlmWrapper
 #from langchain_experimental.tools import PythonREPLTool
 from langchain_community.agent_toolkits import FileManagementToolkit
@@ -58,8 +58,8 @@ class AgentWrapper():
         #tools = tools + [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
 
         # This creates an sub-agent that can be used for a specific task
-        code_writer_tool = get_code_writer_tool(self.llm_wrapper.create_coder_agent_executor().invoke)
-        code_reviewer_tool = get_code_reviewer_tool(self.llm_wrapper.create_reviewer_agent_executor().invoke)
+        code_writer_tool = CodeWriterTool(self.llm_wrapper.create_coder_agent_executor())
+        code_reviewer_tool = CodeTesterTool(self.llm_wrapper.create_tester_agent_executor())
         tools += [code_writer_tool, code_reviewer_tool]
 
         return tools
