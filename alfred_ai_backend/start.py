@@ -3,8 +3,8 @@ import logging
 from typing import Optional, Type
 import importlib
 from alfred_ai_backend.core.agent import AgentWrapper
-from alfred_ai_backend.core.config import Config
-from alfred_ai_backend.models.llm import LlmWrapper
+from alfred_ai_backend.core.Config import Config
+from alfred_ai_backend.models.Model import Model
 import os
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def configure_logger(config: Config, debug_mode: bool, log_file: Optional[str]=N
         handlers=handlers,
     )
 
-def get_model_class(config: Config, model: Optional[str] = 'default_model') -> LlmWrapper:
+def get_model_class(config: Config, model: Optional[str] = 'default_model') -> Model:
     """This dyanmically loads the LLM model to be used by the agent
 
     Args:
@@ -47,7 +47,7 @@ def get_model_class(config: Config, model: Optional[str] = 'default_model') -> L
         KeyError: if the configuration is missing the specified model's definition
 
     Returns:
-        Type[LlmWrapper]: A subclass of LlmWrapper
+        Type[Model]: A subclass of LlmWrapper
     """
     all_models_config = config.get('models')
     if all_models_config == None:

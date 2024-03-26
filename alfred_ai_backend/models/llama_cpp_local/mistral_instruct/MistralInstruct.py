@@ -1,17 +1,19 @@
-from alfred_ai_backend.core.config import Config
-from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
-from alfred_ai_backend.models.llm import LlmWrapper
+from alfred_ai_backend.core.Config import Config
+from alfred_ai_backend.core.utils.RedirectStdStreamsToLogger import RedirectStdStreamsToLogger
+from alfred_ai_backend.models.Model import Model
 from typing import Sequence, Union, Optional
 from langchain_community.llms import LlamaCpp
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.tools import BaseTool
 from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from langchain.agents.output_parsers import JSONAgentOutputParser
-from langchain_core.agents import AgentAction, AgentFinish
+from langchain_core.agents import AgentExecutor, AgentAction, AgentFinish
 from langchain.agents.format_scratchpad import format_log_to_str
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers.json import parse_json_markdown
+from langchain.memory import ConversationBufferWindowMemory
+from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 import logging
 
 
@@ -19,19 +21,19 @@ logger = logging.getLogger(__name__)
 B_INST, E_INST = "[INST]", "[/INST]"
 BOS, EOS = "<s> ", " </s>"
 
-class MistralInstruct(LlmWrapper):
-    def __init__(self, config: Config):
-        super().__init__(__file__, config)
+class MistralInstruct(Model):
+    def __init__(self, am_config: Config, tool_config: Optional[ToolConfig] = None):
+        super().__init__(am_config, tool_config)
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
-            self.model_config = self.get_model_config()
-            self.llm = LlamaCpp(**self.model_config.get_init_config())
+            self._llm = LlamaCpp(**self._tool_config.get.get_init_config())
 
-    def create_agent(
+    def initialize_agent(
         self,
         tools: Sequence[BaseTool],
         tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
-    ) -> Runnable:
+        chat_history: Optional[bool] = True,
+    ) -> AgentExecutor:
         # This is based on langchain.agents.create_structured_chat_agent but customized for Mistral
         prompt = self._create_prompt_template()
         missing_vars = {"tools", "tool_names", "chat_history", "agent_scratchpad", "input"}.difference(
@@ -44,7 +46,13 @@ class MistralInstruct(LlmWrapper):
             tools=tools_renderer(list(tools)),
             tool_names=", ".join([t.name for t in tools]),
         )
-        llm_with_stop = self.llm.bind(stop=["Observation"])
+        llm_with_stop = self._llm.bind(stop=["Observation"])
+
+        memory = None
+        if chat_history:
+            memory = ConversationBufferWindowMemory(
+                memory_key="chat_history", k=5, return_messages=True, output_key="output"
+            )
 
         agent = (
             RunnablePassthrough.assign(
@@ -54,17 +62,26 @@ class MistralInstruct(LlmWrapper):
             | llm_with_stop
             | MistralJsonOutputParser(self)
         )
-        return agent
+
+        self._agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            early_stopping_method="generate",
+            memory=memory,
+        )
         
     def _create_system_prompt_template(self) -> str:
-        return f"{BOS} {B_INST} {self.model_config.get('system_prompt_template')} {E_INST}"
+        return f"{BOS} {B_INST} {self._tool_config.get('system_prompt_template')} {E_INST}"
 
     def _create_user_prompt_template(self) -> str:
-        #return f"{self.model_config.get('user_prompt_context')}\n{self.model_config.get('user_prompt')} {E_INST}\n{self._get_response_prefix()}"
-        return f"{self.model_config.get('user_prompt_context')}\n{B_INST} {self.model_config.get('user_prompt')} {E_INST}\n{self.model_config.get('user_prompt_scratch_pad')}"
+        # TODO Need to fix the config here.... **************************************************
+        return f"{self._tool_config.get('user_prompt_context')}\n{B_INST} {self._tool_config.get('user_prompt')} {E_INST}\n{self._tool_config.get('user_prompt_scratch_pad')}"
     
     def _get_response_prefix(self) -> str:
-        return self.model_config.get('user_prompt_starter_response').strip()
+        # TODO Need to fix the config here.... **************************************************
+        return self._tool_config.get('user_prompt_starter_response').strip()
 
     def _create_prompt_template(self) -> ChatPromptTemplate:
         prompt = ChatPromptTemplate.from_messages([

@@ -16,7 +16,7 @@ class Config(metaclass=SingletonMeta):
     def __init__(self, filename: str = 'config.yml'):
         with open(filename, 'r') as f:
             self.config = yaml.safe_load(f)
-            logger.info("Config loaded successfully")
+            logger.info("Agent Manager config loaded successfully")
     
     def get(self, key: str, default: Any = None) -> Any:
         return self.config.get(key, default)

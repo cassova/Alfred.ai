@@ -7,16 +7,13 @@ logging:
 models:
   default_model:
     name: MistralInstruct
-    module: alfred_ai_backend.models.llama_cpp_local.mistral_instruct
+    module: alfred_ai_backend.models.llama_cpp_local.mistral_instruct.MistralInstruct
   llama_cpp_local.mistral_instruct:
     name: MistralInstruct
-    module: alfred_ai_backend.models.llama_cpp_local.mistral_instruct
-  llama_cpp_local.codellama_instruct:
-    name: CodeLlamaInstruct
-    module: alfred_ai_backend.models.llama_cpp_local.codellama_instruct
+    module: alfred_ai_backend.models.llama_cpp_local.mistral_instruct.MistralInstruct
   openai_api.chat_gpt:
     name: ChatGpt
-    module: alfred_ai_backend.models.openai_api.chat_gpt
+    module: alfred_ai_backend.models.openai_api.chat_gpt.ChatGpt
 enable_langchain_debug_mode: False
 enable_langchain_verbose_mode: False
 root_folder: D:\Temp\alfred_dump
