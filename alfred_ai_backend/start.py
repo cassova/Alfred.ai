@@ -2,7 +2,8 @@ import argparse
 import logging
 from typing import Optional, Type
 import importlib
-from alfred_ai_backend.core.agent import AgentWrapper
+#from alfred_ai_backend.core.agent import AgentWrapper
+from alfred_ai_backend.core.AgentManager import AgentManager
 from alfred_ai_backend.core.Config import Config
 from alfred_ai_backend.models.Model import Model
 import os
@@ -35,7 +36,7 @@ def configure_logger(config: Config, debug_mode: bool, log_file: Optional[str]=N
         handlers=handlers,
     )
 
-def get_model_class(config: Config, model: Optional[str] = 'default_model') -> Model:
+def get_model_type(config: Config, model: Optional[str] = 'default_model') -> Model:
     """This dyanmically loads the LLM model to be used by the agent
 
     Args:
@@ -68,7 +69,7 @@ def get_model_class(config: Config, model: Optional[str] = 'default_model') -> M
         raise
 
     logger.info(f"Loaded model {module_name}")
-    return getattr(module, class_name)(config)
+    return getattr(module, class_name)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -87,8 +88,8 @@ def main():
 
     logger.info(f"Starting Alfred.ai")
     os.environ["WANDB_PROJECT"] = "langchain_alfred"
-    llm_wrapper = get_model_class(config, args.model)
-    agent = AgentWrapper(config, llm_wrapper)
+    model_type = get_model_type(config, args.model)
+    agent_manager = AgentManager(config, model_type)
 
     if not args.task:
         print("Hello, give me a task to do...")
@@ -100,7 +101,7 @@ def main():
                     break
 
                 if len(user_input)>0:
-                    resp = agent.start_task(user_input)
+                    resp = agent_manager.start_task(user_input)
                     logger.info(f"Response: {resp}")
                     print(resp.get('output', ' [[no response]]'))
         except KeyboardInterrupt:

@@ -11,7 +11,9 @@ from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_community.agent_toolkits import FileManagementToolkit
 from alfred_ai_backend.core.Config import Config
+import sys
 
+CONFIG_FILE_NAME = "coder_tool_config.yml"
 
 class CoderSchema(BaseModel):
     input: str = Field(description="Technical design with detailed instructions on what code to write or modify")
@@ -33,17 +35,21 @@ class CoderTool(BaseTool):
     args_schema: Type[BaseModel] = CoderSchema
 
     _model: Model = PrivateAttr(None)
+    _model_path: str = PrivateAttr(None)
     _agent_executor: AgentExecutor = PrivateAttr(None)
     _root_config: Config = PrivateAttr(None)
     _tool_config: ToolConfig = PrivateAttr(None)
 
     def __init__(self, root_config: Config, model_type: Type[Model], **kwargs: Any):
         super().__init__(**kwargs)
+        self._model_path = getattr(sys.modules[model_type.__module__], '__file__')
         self._root_config = root_config
-        self._tool_config = ToolConfig("coder_config.yml")
+        self._tool_config = ToolConfig(CONFIG_FILE_NAME, self._model_path)
         self._model = model_type(self._root_config, self._tool_config)
         self._model.initialize_agent(
-            tools=self.get_tools(),
+            user_input_variables=['input'],
+            system_input_variables={'cwd':None},
+            tools=self._get_tools(),
             chat_history=True
         )
 
@@ -54,7 +60,8 @@ class CoderTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None
     ) -> str:
         """Use the tool."""
-        return self._model.invoke_agent_executor({'input': input, 'cwd': cwd}, {'callbacks': [CoderCallbackHandler]})
+        resp = self._model.invoke_agent_executor({'input': input, 'cwd': cwd}, {'callbacks': [CoderCallbackHandler]})
+        return resp.get('output', ' [[no response]]')
     
     async def _arun(
         self,
@@ -65,7 +72,7 @@ class CoderTool(BaseTool):
         # TODO: add async support
         raise NotImplementedError("CoderTool does not support async")
     
-    def get_tools(self):
+    def _get_tools(self):
         tools = load_tools(
             ["llm-math"],
             llm=self._model.get_llm(),

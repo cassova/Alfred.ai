@@ -1,4 +1,4 @@
-from typing import Sequence, Dict, Any, Optional
+from typing import Sequence, Dict, List, Any, Optional
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.tools import BaseTool
 from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
@@ -32,34 +32,42 @@ class ChatGpt(Model):
     
     def initialize_agent(
         self,
+        user_input_variables: List[str],
+        system_input_variables: Dict[str,str],
         tools: Sequence[BaseTool],
         tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
         chat_history: Optional[bool] = True,
     ) -> AgentExecutor:
 
+        # TODO: cwd is for agent_manager, we need something else for the others. like py_pkg_path
+        system_input_var_list = list(system_input_variables.keys()) if system_input_variables else []
         if chat_history:
             prompt = ChatPromptTemplate.from_messages([
-                SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=['cwd'], template=self._tool_config.get('system_prompt_template'))),
+                SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=system_input_var_list, template=self._tool_config.get('system_prompt_template'))),
                 MessagesPlaceholder(variable_name='chat_history', optional=True),
-                HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self._tool_config.get('user_prompt_template'))),
+                HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=user_input_variables, template=self._tool_config.get('user_prompt_template'))),
                 MessagesPlaceholder(variable_name='agent_scratchpad')
             ])
         else:
             prompt = ChatPromptTemplate.from_messages([
-                SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=['cwd'], template=self._tool_config.get('system_prompt_template'))),
-                HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=['input'], template=self._tool_config.get('user_prompt_template'))),
+                SystemMessagePromptTemplate(prompt=PromptTemplate(input_variables=system_input_var_list, template=self._tool_config.get('system_prompt_template'))),
+                HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=user_input_variables, template=self._tool_config.get('user_prompt_template'))),
                 MessagesPlaceholder(variable_name='agent_scratchpad')
             ])
         
-        prompt = prompt.partial(
-            cwd=self._root_config.get('root_folder'),
-        )
+        if system_input_variables:
+            prompt = prompt.partial(**system_input_variables)
+
         agent = create_openai_tools_agent(self._llm, tools, prompt)
 
         memory = None
         if chat_history:
             memory = ConversationBufferWindowMemory(
-                memory_key="chat_history", k=5, return_messages=True, output_key="output"
+                memory_key="chat_history",
+                k=5,
+                return_messages=True,
+                input_key="input",  # Since we can have mulitple inputs we need to specify which to use for history for some reason
+                output_key="output",
             )
         
         self._agent_executor = AgentExecutor(
@@ -70,6 +78,8 @@ class ChatGpt(Model):
             early_stopping_method="generate",
             memory=memory,
         )
+        return self._agent_executor
+
 
     def invoke_agent_executor(self, input: Dict[str, Any], inference_config: Optional[RunnableConfig] = None, **kwargs: Any  ) -> Dict[str, Any]:
         with get_openai_callback() as cb:
