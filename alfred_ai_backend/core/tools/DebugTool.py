@@ -7,22 +7,23 @@ from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
+from langchain_community.agent_toolkits import FileManagementToolkit
+from langchain_experimental.tools import PythonREPLTool
 from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
-from langchain_community.agent_toolkits import FileManagementToolkit
 from alfred_ai_backend.core.Config import Config
 import sys
 
 root_config = Config()
-CONFIG_FILE_NAME = "coder_tool_config.yml"
+CONFIG_FILE_NAME = "debug_tool_config.yml"
 
-class CoderSchema(BaseModel):
-    input: str = Field(description="Technical design with detailed instructions on what code to write or modify")
-    cwd: str = Field(description="Current working directory where sub-folders should be created and files written")
+class DebugSchema(BaseModel):
+    input: str = Field(description="Detailed description of the issue, its location, the error message, the stack trace, and instructions on how to recreate the issue")
+    cwd: str = Field(description="Current working directory from which the issue can be recreated and debugged")
     pkg_name: str = Field(description="The package name and subfolder where all code should reside")
 
 
-class CoderCallbackHandler(BaseCallbackHandler):
+class DebugCallbackHandler(BaseCallbackHandler):
     def on_tool_start(
         self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
     ) -> Any:
@@ -31,10 +32,10 @@ class CoderCallbackHandler(BaseCallbackHandler):
         print(f"Starting Tool: {serialized} - {input_str}")
 
 
-class CoderTool(BaseTool):
-    name: str = "Coder"
-    description: str = "Useful for when you need to create or modify code"
-    args_schema: Type[BaseModel] = CoderSchema
+class DebugTool(BaseTool):
+    name: str = "Debugger"
+    description: str = "Useful for when you need to debug and fix broken code"
+    args_schema: Type[BaseModel] = DebugSchema
 
     _model: Model = PrivateAttr(None)
     _model_path: str = PrivateAttr(None)
@@ -47,7 +48,7 @@ class CoderTool(BaseTool):
         self._tool_config = ToolConfig(CONFIG_FILE_NAME, self._model_path)
         self._model = model_type(self._tool_config)
         self._model.initialize_agent(
-            user_input_variables=['input', 'pkg_name'],
+            user_input_variables=['input'],
             system_input_variables={'cwd':root_config.get('root_folder')},
             tools=self._get_tools(),
             chat_history=True
@@ -59,7 +60,7 @@ class CoderTool(BaseTool):
         **kwargs: Any
     ) -> str:
         """Use the tool."""
-        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [CoderCallbackHandler]})
+        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [DebugCallbackHandler]})
         return resp.get('output', ' [[no response]]')
     
     async def _arun(
@@ -69,7 +70,7 @@ class CoderTool(BaseTool):
     ) -> str:
         """Use the tool asynchronously."""
         # TODO: add async support
-        raise NotImplementedError("CoderTool does not support async")
+        raise NotImplementedError("DebugTool does not support async")
     
     def _get_tools(self):
         tools = load_tools(
@@ -81,4 +82,5 @@ class CoderTool(BaseTool):
             root_dir=str(root_config.get('root_folder'))
         )
         tools += file_toolkit.get_tools()
+        tools += [PythonREPLTool()]  # This addresses TypeError: unhashable type: 'PythonREPLTool'
         return tools

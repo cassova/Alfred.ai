@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Sequence, Optional
 import logging
-import yaml
 from langchain.agents import AgentExecutor
 from langchain_core.tools import BaseTool
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
@@ -12,13 +11,15 @@ from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 #from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
 #from langchain_community.callbacks import wandb_tracing_enabled
 
+root_config = Config()
 logger = logging.getLogger(__name__)
 
 class Model(ABC):
-    def __init__(self, root_config: Config, tool_config: Optional[ToolConfig] = None):
+    """LLM model interface"""
+
+    def __init__(self, tool_config: Optional[ToolConfig] = None):
         self._llm  = None
         self._agent_executor: AgentExecutor = None
-        self._root_config = root_config
         self._tool_config = tool_config
 
     def get_llm(self):

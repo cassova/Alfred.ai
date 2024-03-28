@@ -1,4 +1,3 @@
-from alfred_ai_backend.core.Config import Config
 from alfred_ai_backend.core.utils.RedirectStdStreamsToLogger import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.Model import Model
 from typing import Sequence, Union, Optional
@@ -22,8 +21,8 @@ B_INST, E_INST = "[INST]", "[/INST]"
 BOS, EOS = "<s> ", " </s>"
 
 class MistralInstruct(Model):
-    def __init__(self, am_config: Config, tool_config: Optional[ToolConfig] = None):
-        super().__init__(am_config, tool_config)
+    def __init__(self, tool_config: Optional[ToolConfig] = None):
+        super().__init__(tool_config)
         # Load the model using the model's init config and send any std messages to logger
         with RedirectStdStreamsToLogger(logger):
             self._llm = LlamaCpp(**self._tool_config.get.get_init_config())

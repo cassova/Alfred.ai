@@ -1,6 +1,6 @@
 import argparse
 import logging
-from typing import Optional, Type
+from typing import Optional
 import importlib
 #from alfred_ai_backend.core.agent import AgentWrapper
 from alfred_ai_backend.core.AgentManager import AgentManager
@@ -26,7 +26,7 @@ def configure_logger(config: Config, debug_mode: bool, log_file: Optional[str]=N
         handlers.append(logging.StreamHandler())
     log_file = log_file if log_file else log_config['file']
     if log_file:
-        handlers.append(logging.FileHandler(log_file, 'w'))
+        handlers.append(logging.FileHandler(log_file, 'w', 'utf-8'))
 
     if len(handlers)==0: return
 
@@ -89,7 +89,7 @@ def main():
     logger.info(f"Starting Alfred.ai")
     os.environ["WANDB_PROJECT"] = "langchain_alfred"
     model_type = get_model_type(config, args.model)
-    agent_manager = AgentManager(config, model_type)
+    agent_manager = AgentManager(model_type)
 
     if not args.task:
         print("Hello, give me a task to do...")

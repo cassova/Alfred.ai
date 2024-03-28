@@ -6,17 +6,15 @@ from langchain.tools.render import ToolsRenderer, render_text_description_and_ar
 from langchain.memory import ConversationBufferWindowMemory
 import logging
 from langchain_community.callbacks import get_openai_callback
-from alfred_ai_backend.core.Config import Config
 from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
 
-
 logger = logging.getLogger(__name__)
 
 class ChatGpt(Model):
-    def __init__(self, root_config: Config, tool_config: Optional[ToolConfig] = None):
-        super().__init__(root_config, tool_config)
+    def __init__(self, tool_config: Optional[ToolConfig] = None):
+        super().__init__(tool_config)
         
         try:
             from langchain_openai import ChatOpenAI

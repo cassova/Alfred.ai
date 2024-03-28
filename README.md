@@ -15,9 +15,8 @@ poetry run python -m alfred_ai_backend.start
 ```
 
 # ToDos
-- [x] Add Mistral Instruct support
 - [x] Add math support
-- [ ] Add gpt4 support (config switch)
+- [x] Add gpt4 support (config switch)
 - [ ] Add internet search
 - [ ] Add file operations
 - [ ] Add console operations (need to create env?)
