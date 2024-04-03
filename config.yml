@@ -14,6 +14,9 @@ models:
   openai_api.chat_gpt:
     name: ChatGpt
     module: alfred_ai_backend.models.openai_api.chat_gpt.ChatGpt
+  anthropic.claude:
+    name: Claude
+    module: alfred_ai_backend.models.anthropic.claude.Claude
 enable_langchain_debug_mode: False
 enable_langchain_verbose_mode: False
 root_folder: D:\Temp\alfred_dump

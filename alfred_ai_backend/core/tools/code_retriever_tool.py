@@ -6,7 +6,7 @@ def create_code_retriever_tool() -> Tool:
     """Creates a tool that will be used 
 
     Returns:
-        _type_: _description_
+        Tool: Code retriever tool
     """
 
     # TODO: this is going to be broken: the retiever is empty at this stage
@@ -20,6 +20,6 @@ def create_code_retriever_tool() -> Tool:
     tool = create_retriever_tool(
         retriever,
         "SearchCodeRepo",
-        "Searches and returns parts of the code repo.",
+        "Searches and returns parts of the code repository.",
     )
     return tool

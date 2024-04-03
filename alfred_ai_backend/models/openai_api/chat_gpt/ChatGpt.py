@@ -25,7 +25,6 @@ class ChatGpt(Model):
                 "use this embedding model: pip install langchain-openai"
             )
 
-        # TODO Need to fix the config here.... **************************************************
         self._llm = ChatOpenAI(**self._tool_config.get_init_config())
     
     def initialize_agent(
@@ -83,6 +82,8 @@ class ChatGpt(Model):
         with get_openai_callback() as cb:
             response = self._agent_executor.invoke(input, inference_config, **kwargs)
 
+            # TODO: need to figure out why these are always zero.
+            # Think it might be related to an issue: https://github.com/langchain-ai/langchain/issues/18212
             logger.info(f"Total Tokens: {cb.total_tokens}")
             logger.info(f"Prompt Tokens: {cb.prompt_tokens}")
             logger.info(f"Completion Tokens: {cb.completion_tokens}")
