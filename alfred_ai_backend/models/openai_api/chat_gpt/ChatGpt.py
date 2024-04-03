@@ -1,11 +1,10 @@
 from typing import Sequence, Dict, List, Any, Optional
-from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain.agents import AgentExecutor
 from langchain_core.tools import BaseTool
 from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, MessagesPlaceholder, HumanMessagePromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from langchain.memory import ConversationBufferWindowMemory
 import logging
-from langchain_community.callbacks import get_openai_callback
 from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
@@ -18,6 +17,8 @@ class ChatGpt(Model):
         
         try:
             from langchain_openai import ChatOpenAI
+            from langchain_community.callbacks import get_openai_callback
+            from langchain.agents import create_openai_tools_agent
         except ImportError:
             raise ImportError(
                 "Could not import langchain_openai library. "
