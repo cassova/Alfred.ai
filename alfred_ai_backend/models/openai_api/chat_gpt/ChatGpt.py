@@ -8,6 +8,7 @@ import logging
 from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
+from langchain.agents import create_openai_tools_agent
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,6 @@ class ChatGpt(Model):
         try:
             from langchain_openai import ChatOpenAI
             from langchain_community.callbacks import get_openai_callback
-            from langchain.agents import create_openai_tools_agent
         except ImportError:
             raise ImportError(
                 "Could not import langchain_openai library. "
