@@ -7,8 +7,11 @@ from langchain.memory import ConversationBufferWindowMemory
 from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
-from langchain.agents.output_parsers import XMLAgentOutputParser
 import logging
+# from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
+from alfred_ai_backend.models.anthropic.claude.ClaudeAgentOutputParser import ClaudeAgentOutputParser
+# from langchain_core.output_parsers.openai_tools import JsonOutputToolsParser
+from langchain_core.runnables import Runnable, RunnablePassthrough
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +68,8 @@ class Claude(Model):
             HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=user_input_variables, template=self._tool_config.get('user_prompt_template'))),
         ])
 
-        if system_input_variables:
-            prompt = prompt.partial(**system_input_variables)
+        # if system_input_variables:
+        #     prompt = prompt.partial(**system_input_variables)
 
         memory = None
         if chat_history:
@@ -74,23 +77,25 @@ class Claude(Model):
                 memory_key="chat_history",
                 k=5,
                 return_messages=True,
-                input_key="input",  # Since we can have mulitple inputs we need to specify which to use for history for some reason
+                input_key="input",
                 output_key="output",
             )
         
+        if system_input_variables:
+            prompt = prompt.partial(**system_input_variables)
+
         llm_with_tools = self._llm.bind_tools(tools=tools, stop=["</tool_input>", "</final_answer>"])
 
         agent = (
-            {
-                "input": lambda x: x["input"],
-                "agent_scratchpad": lambda x: self._convert_intermediate_steps(
+            RunnablePassthrough.assign(
+                agent_scratchpad=lambda x: self._convert_intermediate_steps(
                     x["intermediate_steps"]
                 ),
-                "chat_history": lambda _: memory.load_memory_variables({})["chat_history"]  # no idea if this will work...
-            }
+                #chat_history=lambda _: memory.load_memory_variables({})["chat_history"]
+            )
             | prompt
             | llm_with_tools
-            | XMLAgentOutputParser()
+            | ClaudeAgentOutputParser()
         )
         
         self._agent_executor = AgentExecutor(
@@ -107,6 +112,7 @@ class Claude(Model):
     def invoke_agent_executor(self, input: Dict[str, Any], inference_config: Optional[RunnableConfig] = None, **kwargs: Any  ) -> Dict[str, Any]:
         # TODO add token counting for Anthropic
         # with get_openai_callback() as cb:
+        print("*** Invoking with the following input: ", input)
         response = self._agent_executor.invoke(input, inference_config, **kwargs)
 
         # logger.info(f"Total Tokens: {cb.total_tokens}")

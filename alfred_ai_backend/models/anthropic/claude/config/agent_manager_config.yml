@@ -15,13 +15,15 @@ system_prompt_template: |
 
   When you are ready to create a program, come up with a package name reflective of the task and create a folder
   where all python code should go on the local file system under here: `{cwd}`
+  Use this to make complete file paths when interacting with the filesystem.
 
   Ensure to include the following in any program you create:
    - Unit tests of all functionality that is not trivial
    - README.md with instructions on how to install and use as well as example inputs and outputs
    - requirements.txt with which additional packages are needed
 
-  When you are done or if responding to the human, respond with a final answer between <final_answer></final_answer>. For example:
+  When you are done or if responding to the human, respond with a final answer between <final_answer> and </final_answer>.
+  For example:
   <final_answer>I've finished creating your hello world program!</final_answer>
 
 temp: |
