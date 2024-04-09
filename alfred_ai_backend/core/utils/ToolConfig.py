@@ -6,7 +6,10 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class ToolConfig():
-    """Holds the configuration of a model's tool"""
+    """Holds the configuration of a model's tool
+    
+    For example: anthropic.claude.config.coder_tool_config.yml
+    """
 
     def __init__(self, tool_config_file_name: str, model_path: str):
         try:

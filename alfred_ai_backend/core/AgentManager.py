@@ -1,12 +1,12 @@
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.agents import load_tools, AgentExecutor
+from langchain.agents import load_tools
 #from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, Any, List, Type
 import logging
 from alfred_ai_backend.core.Config import Config
 from alfred_ai_backend.core.tools.CoderTool import CoderTool
 from alfred_ai_backend.core.tools.TesterTool import TesterTool
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.AgentLogger import AgentLogger
 from alfred_ai_backend.models.Model import Model
 from langchain_community.agent_toolkits import FileManagementToolkit
 from langchain.globals import set_verbose, set_debug
@@ -31,13 +31,6 @@ class AgentManager():
             set_debug(True)
         if root_config.get('enable_langchain_verbose_mode', False):
             set_verbose(True)
-
-        memory = ConversationBufferWindowMemory(
-            memory_key="chat_history",
-            k=5,
-            return_messages=True,
-            output_key="output"
-        )        
             
         # initialize agent
         tools = self._get_tools()
@@ -60,13 +53,12 @@ class AgentManager():
         tools += file_toolkit.get_tools()
 
         # This creates sub-agents that can be used for a specific task
-        coder_tool = CoderTool(self._model_type)
-        tester_tool = TesterTool(self._model_type)
+        coder_tool = CoderTool(self._model_type, parent="AgentManager")
+        tester_tool = TesterTool(self._model_type, parent="AgentManager")
         tools += [coder_tool, tester_tool]
 
         return tools
 
-
     def start_task(self, user_input_str: str) -> Dict[str, Any]:
         logger.info("*** Starting task ***")
-        return self._model.invoke_agent_executor({'input': user_input_str})
+        return self._model.invoke_agent_executor({'input': user_input_str}, {'callbacks': [AgentLogger("AgentManager")]})

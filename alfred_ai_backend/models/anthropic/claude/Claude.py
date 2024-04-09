@@ -4,14 +4,16 @@ from langchain_core.tools import BaseTool
 from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from langchain.memory import ConversationBufferWindowMemory
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
 import logging
 # from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from alfred_ai_backend.models.anthropic.claude.ClaudeAgentOutputParser import ClaudeAgentOutputParser
 # from langchain_core.output_parsers.openai_tools import JsonOutputToolsParser
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough
+
+from alfred_ai_backend.models.anthropic.claude.utils import parse_tool_input
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +139,7 @@ class Claude(Model):
         log = ""
         for action, observation in intermediate_steps:
             log += (
-                f"<tool>{action.tool}</tool><tool_input>{action.tool_input}"
+                f"<tool>{action.tool}</tool><tool_input>{str(parse_tool_input(action.tool_input))}"
                 f"</tool_input><observation>{observation}</observation>"
             )
         return log

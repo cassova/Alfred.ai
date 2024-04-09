@@ -1,15 +1,15 @@
-from typing import Optional, Type, Any, Dict
+from typing import Optional, Type, Any
 from langchain_core.pydantic_v1 import BaseModel, Field, PrivateAttr
 from langchain.tools import BaseTool
-from langchain.agents import AgentExecutor, load_tools
-from langchain_core.callbacks import BaseCallbackHandler
+from langchain.agents import load_tools, AgentExecutor
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
 )
 from langchain_community.agent_toolkits import FileManagementToolkit
 from langchain_experimental.tools import PythonREPLTool
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.AgentLogger import AgentLogger
 from alfred_ai_backend.models.Model import Model
 from alfred_ai_backend.core.Config import Config
 import sys
@@ -23,15 +23,6 @@ class DebugSchema(BaseModel):
     pkg_name: str = Field(description="The package name and subfolder where all code should reside")
 
 
-class DebugCallbackHandler(BaseCallbackHandler):
-    def on_tool_start(
-        self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
-    ) -> Any:
-        """Run when tool starts running."""
-        # TODO: This doesn't seem to work, need to debug
-        print(f"Starting Tool: {serialized} - {input_str}")
-
-
 class DebugTool(BaseTool):
     name: str = "Debugger"
     description: str = "Useful for when you need to debug and fix broken code"
@@ -41,9 +32,11 @@ class DebugTool(BaseTool):
     _model_path: str = PrivateAttr(None)
     _agent_executor: AgentExecutor = PrivateAttr(None)
     _tool_config: ToolConfig = PrivateAttr(None)
+    _parent: str = PrivateAttr("")
 
-    def __init__(self, model_type: Type[Model], **kwargs: Any):
+    def __init__(self, model_type: Type[Model], parent: str, **kwargs: Any):
         super().__init__(**kwargs)
+        self._parent = parent
         self._model_path = getattr(sys.modules[model_type.__module__], '__file__')
         self._tool_config = ToolConfig(CONFIG_FILE_NAME, self._model_path)
         self._model = model_type(self._tool_config)
@@ -60,7 +53,7 @@ class DebugTool(BaseTool):
         **kwargs: Any
     ) -> str:
         """Use the tool."""
-        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [DebugCallbackHandler]})
+        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [AgentLogger("Debugger", self._parent)]})
         return resp.get('output', ' [[no response]]')
     
     async def _arun(
