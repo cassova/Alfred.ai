@@ -1,6 +1,6 @@
 from alfred_ai_backend.core.utils.RedirectStdStreamsToLogger import RedirectStdStreamsToLogger
 from alfred_ai_backend.models.Model import Model
-from typing import Sequence, Union, Optional
+from typing import Sequence, Union, Optional, List, Dict
 from langchain_community.llms import LlamaCpp
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.tools import BaseTool
@@ -12,7 +12,7 @@ from langchain.agents.format_scratchpad import format_log_to_str
 from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers.json import parse_json_markdown
 from langchain.memory import ConversationBufferWindowMemory
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 import logging
 
 
@@ -29,6 +29,8 @@ class MistralInstruct(Model):
 
     def initialize_agent(
         self,
+        user_input_variables: List[str],
+        system_input_variables: Dict[str,str],
         tools: Sequence[BaseTool],
         tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
         chat_history: Optional[bool] = True,

@@ -1,8 +1,14 @@
+# These print messages to the console:
+enable_langchain_debug_mode: False
+enable_langchain_verbose_mode: False
+
 logging:
   level: DEBUG
   verbose: False
-  file: output2.log
+  file: output.log
   format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+root_folder: D:\Temp\alfred_dump
 
 models:
   default_model:
@@ -17,6 +23,3 @@ models:
   anthropic.claude:
     name: Claude
     module: alfred_ai_backend.models.anthropic.claude.Claude
-enable_langchain_debug_mode: False
-enable_langchain_verbose_mode: True
-root_folder: D:\Temp\alfred_dump

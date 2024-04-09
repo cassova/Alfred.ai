@@ -5,7 +5,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate, PromptTemplate, Syst
 from langchain.tools.render import ToolsRenderer, render_text_description_and_args
 from langchain.memory import ConversationBufferWindowMemory
 import logging
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
 from langchain.agents import create_openai_tools_agent

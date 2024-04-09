@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Sequence, Optional
+from typing import Any, Dict, Sequence, Optional, List
 import logging
 from langchain.agents import AgentExecutor
 from langchain_core.tools import BaseTool
@@ -7,7 +7,7 @@ from langchain.tools.render import ToolsRenderer, render_text_description_and_ar
 from alfred_ai_backend.core.Config import Config
 from langchain_core.runnables import RunnableConfig
 
-from alfred_ai_backend.core.tools.ToolConfig import ToolConfig
+from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 #from alfred_ai_backend.core.utils.redirect_stream import RedirectStdStreamsToLogger
 #from langchain_community.callbacks import wandb_tracing_enabled
 
@@ -28,6 +28,8 @@ class Model(ABC):
     @abstractmethod
     def initialize_agent(
         self,
+        user_input_variables: List[str],
+        system_input_variables: Dict[str,str],
         tools: Sequence[BaseTool],
         tools_renderer: Optional[ToolsRenderer] = render_text_description_and_args,
         chat_history: Optional[bool] = True,
