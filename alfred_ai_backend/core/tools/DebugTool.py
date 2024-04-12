@@ -8,6 +8,7 @@ from langchain.callbacks.manager import (
 )
 from langchain_community.agent_toolkits import FileManagementToolkit
 from langchain_experimental.tools import PythonREPLTool
+from alfred_ai_backend.core.utils.StatusMessaging import StatusMessaging
 from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.core.utils.AgentLogger import AgentLogger
 from alfred_ai_backend.models.Model import Model
@@ -25,7 +26,7 @@ class DebugSchema(BaseModel):
 
 class DebugTool(BaseTool):
     name: str = "Debugger"
-    description: str = "Useful for when you need to debug and fix broken code"
+    description: str = "Useful for when you need to debug and fix broken code. Use to find where in the code there is a problem."
     args_schema: Type[BaseModel] = DebugSchema
 
     _model: Model = PrivateAttr(None)
@@ -53,7 +54,7 @@ class DebugTool(BaseTool):
         **kwargs: Any
     ) -> str:
         """Use the tool."""
-        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [AgentLogger("Debugger", self._parent)]})
+        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [AgentLogger("Debugger", self._parent), StatusMessaging("Debugger", self._parent)]})
         return resp.get('output', ' [[no response]]')
     
     async def _arun(

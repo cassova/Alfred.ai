@@ -1,4 +1,5 @@
 # These print messages to the console:
+enable_lanchain_tracing_v2: False
 enable_langchain_debug_mode: False
 enable_langchain_verbose_mode: False
 

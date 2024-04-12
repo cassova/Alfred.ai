@@ -79,25 +79,26 @@ class AgentLogger(BaseCallbackHandler):
     #     self._logger.info(f"[{self._name}] - Chain End")
     #     self._logger.debug(f"   Output: {outputs}")
 
-    def on_chain_error(
-        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
-    ) -> Any:
-        """Run when chain errors."""
-        self._logger.error(f"[{self._name}] - Chain ERROR")
-        self._logger.error(f"   Error: {error}")
-        self._logger.error(f"   Traceback:\n{traceback.format_exc()}")
+    # There is too much messaging with chains to make these logs useful
+    # def on_chain_error(
+    #     self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+    # ) -> Any:
+    #     """Run when chain errors."""
+    #     self._logger.error(f"[{self._name}] - Chain ERROR")
+    #     self._logger.error(f"   Error: {error}")
+    #     self._logger.error(f"   Traceback:\n{traceback.format_exc()}")
 
     def on_tool_start(
         self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
     ) -> Any:
         """Run when tool starts running."""
         self._running_tool = serialized.get('name', serialized.get('tool', 'unknown'))
-        self._logger.info(f"[{self._name} > {self._running_tool}] - STARTED tool")
+        self._logger.info(f"[{self._name}] - STARTED tool ({self._running_tool})")
         self._logger.debug(f"   Tool Inputs: {input_str}")
 
     def on_tool_end(self, output: Any, **kwargs: Any) -> Any:
         """Run when tool ends running."""
-        self._logger.info(f"[{self._name} > {self._running_tool}] - FINISEHD tool")
+        self._logger.info(f"[{self._name}] - FINISHED tool ({self._running_tool})")
         self._logger.debug(f"   Tool Output: {output}")
         self._running_tool = None
 
@@ -105,14 +106,14 @@ class AgentLogger(BaseCallbackHandler):
         self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when tool errors."""
-        self._logger.error(f"[{self._name} > {self._running_tool}] - Tool ERROR")
+        self._logger.error(f"[{self._name}] - Tool ERROR ({self._running_tool})")
         self._logger.error(f"   Error: {error}")
         self._logger.error(f"   Traceback:\n{traceback.format_exc()}")
         self._running_tool = None
 
     def on_agent_action(self, action: AgentAction, **kwargs: Any) -> Any:
         """Run on agent action."""
-        self._logger.info(f"[{self._name}] - Agent Action")
+        self._logger.info(f"[{self._name}] - Agent Action ({action.get('tool', 'unknown')})")
         self._logger.debug(f"   Action: {action}")
 
     def on_agent_finish(self, finish: AgentFinish, **kwargs: Any) -> Any:

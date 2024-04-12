@@ -5,6 +5,7 @@ import logging
 from alfred_ai_backend.core.Config import Config
 from alfred_ai_backend.core.tools.CoderTool import CoderTool
 from alfred_ai_backend.core.tools.TesterTool import TesterTool
+from alfred_ai_backend.core.utils.StatusMessaging import StatusMessaging
 from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.core.utils.AgentLogger import AgentLogger
 from alfred_ai_backend.models.Model import Model
@@ -61,4 +62,4 @@ class AgentManager():
 
     def start_task(self, user_input_str: str) -> Dict[str, Any]:
         logger.info("*** Starting task ***")
-        return self._model.invoke_agent_executor({'input': user_input_str}, {'callbacks': [AgentLogger("AgentManager")]})
+        return self._model.invoke_agent_executor({'input': user_input_str}, {'callbacks': [AgentLogger("AgentManager"), StatusMessaging("AgentManager")]})
