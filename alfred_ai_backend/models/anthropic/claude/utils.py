@@ -1,10 +1,12 @@
-from typing import Union, Dict
+from typing import Union, Dict, Any
 from langchain_core.agents import AgentAction, AgentFinish
 import ast
 import json
+import logging
 
+logger = logging.getLogger(__name__)
 
-def parse_tool_input(tool_input: Union[Dict,str]):
+def parse_tool_input(tool_input: Union[Dict,str]) -> Any:
     if isinstance(tool_input,str):
         try:
             tool_input = json.loads(tool_input)
@@ -12,7 +14,9 @@ def parse_tool_input(tool_input: Union[Dict,str]):
             try:
                 tool_input = ast.literal_eval(tool_input)
             except Exception:
-                raise ValueError(f"Unable to parse tool_input: {tool_input}")
+                #raise ValueError(f"Unable to parse tool_input: {tool_input}")
+                logger.warn(f"Unable to parse tool_input but this might be OK if the tool supports a string. Continuing. Tool input: {tool_input}")
+                pass
     
     # Took this code and comment from here: from langchain.agents.output_parsers.openai_tools import parse_ai_message_to_openai_tool_action
     # since we were getting this problem with calling some tools
@@ -37,7 +41,7 @@ def parse_content(text: str) -> Union[AgentAction, AgentFinish]:
         _tool_input = tool_input.split("<tool_input>")[1]
         if "</tool_input>" in _tool_input:
             _tool_input = _tool_input.split("</tool_input>")[0]
-        return AgentAction(tool=_tool, tool_input=_tool_input, log=text)
+        return AgentAction(tool=_tool, tool_input=parse_tool_input(_tool_input), log=text)
     elif "<final_answer>" in text:
         _, answer = text.split("<final_answer>")
         if "</final_answer>" in answer:

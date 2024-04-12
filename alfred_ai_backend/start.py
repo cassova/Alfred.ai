@@ -5,6 +5,7 @@ import importlib
 #from alfred_ai_backend.core.agent import AgentWrapper
 from alfred_ai_backend.core.AgentManager import AgentManager
 from alfred_ai_backend.core.Config import Config
+from alfred_ai_backend.core.utils.StatusMessaging import get_colored_text
 from alfred_ai_backend.models.Model import Model
 import os
 
@@ -92,10 +93,10 @@ def main():
     agent_manager = AgentManager(model_type)
 
     if not args.task:
-        print("Hello, give me a task to do...")
+        print(get_colored_text("Hello, give me a task to do..."))
         try:
             while True:
-                user_input = input(">>> ")
+                user_input = input(get_colored_text(">>> ", "green"))
 
                 if len(user_input)<8 and (user_input.lower().startswith('exit') or user_input.lower().startswith('quit')):
                     break
@@ -103,7 +104,8 @@ def main():
                 if len(user_input)>0:
                     resp = agent_manager.start_task(user_input)
                     logger.info(f"Response: {resp}")
-                    print(resp.get('output', ' [[no response]]'))
+                    colored_text = get_colored_text(resp.get('output', ' [[no response]]'))
+                    print(colored_text)
         except KeyboardInterrupt:
             print(" *** ctrl+c was pressed ***")
 

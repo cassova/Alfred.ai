@@ -1,16 +1,18 @@
-from typing import Union, List, Dict, Any
+from typing import Union, List, Any
 from langchain_core.outputs import ChatGeneration, Generation
 from langchain_core.exceptions import OutputParserException
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.output_parsers.openai_tools import JsonOutputToolsParser
 from alfred_ai_backend.models.anthropic.claude.utils import parse_tool_input, parse_content
-import json
+import logging
 
+logger = logging.getLogger(__name__)
 
 class ClaudeAgentOutputParser(JsonOutputToolsParser):
     
     def parse_result(self, result: List[Generation], *, partial: bool = False) -> Any:
-        print(f"Got Claude result: {result}")
+        logger.debug(f"Got Claude result: {result}")
+
         generation = result[0]
         if not isinstance(generation, ChatGeneration):
             raise OutputParserException(
@@ -49,4 +51,3 @@ class ClaudeAgentOutputParser(JsonOutputToolsParser):
     @property
     def _type(self) -> str:
         return "xml-agent"
-    

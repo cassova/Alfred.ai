@@ -18,7 +18,7 @@ class RefreshCodeDbSchema(BaseModel):
 
 class RefreshCodeDbTool(BaseTool):
     name: str = "RefreshCodeDb"
-    description: str = "Useful for refreshing code database which is your understanding of a local python package"
+    description: str = "Useful for refreshing code database which is your understanding of a local python package. Use this once to "
     args_schema: Type[BaseModel] = RefreshCodeDbSchema
 
     def _run(

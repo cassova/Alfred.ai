@@ -7,6 +7,7 @@ from langchain.callbacks.manager import (
     CallbackManagerForToolRun,
 )
 from alfred_ai_backend.core.tools.DebugTool import DebugTool
+from alfred_ai_backend.core.utils.StatusMessaging import StatusMessaging
 from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.core.utils.AgentLogger import AgentLogger
 from alfred_ai_backend.models.Model import Model
@@ -54,7 +55,7 @@ class TesterTool(BaseTool):
         **kwargs: Any
     ) -> str:
         """Use the tool."""
-        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [AgentLogger("Tester", self._parent)]})
+        resp = self._model.invoke_agent_executor(kwargs, {'callbacks': [AgentLogger("Tester", self._parent), StatusMessaging("Tester", self._parent)]})
         return resp.get('output', ' [[no response]]')
     
     async def _arun(

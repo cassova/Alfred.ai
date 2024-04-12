@@ -7,31 +7,12 @@ from langchain.memory import ConversationBufferWindowMemory
 from alfred_ai_backend.core.utils.ToolConfig import ToolConfig
 from alfred_ai_backend.models.Model import Model
 from langchain_core.runnables import RunnableConfig
-import logging
-# from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 from alfred_ai_backend.models.anthropic.claude.ClaudeAgentOutputParser import ClaudeAgentOutputParser
-# from langchain_core.output_parsers.openai_tools import JsonOutputToolsParser
 from langchain_core.runnables import RunnablePassthrough
-
 from alfred_ai_backend.models.anthropic.claude.utils import parse_tool_input
+import logging
 
 logger = logging.getLogger(__name__)
-
-"""
-NOTES:
-Provider > Anthropic: https://python.langchain.com/docs/integrations/platforms/anthropic
-Chat models > Anthropic: https://python.langchain.com/docs/integrations/chat/anthropic
-Chat models > Anthropic Tools: https://python.langchain.com/docs/integrations/chat/anthropic_functions
-Templates > extraction-anthropic-functions: https://python.langchain.com/docs/templates/extraction-anthropic-functions
-
-This has a JS working example
-JS: Langchain Expression Language > Cookbook > Agents: https://js.langchain.com/docs/expression_language/cookbook/agents
-*** Python equivalent: https://python.langchain.com/docs/expression_language/cookbook/agent
-
-Anthropic Function calling spec: https://docs.anthropic.com/claude/docs/functions-external-tools
-
-Medium article implentation example: https://medium.com/@daniellefranca96/running-a-langchain-agent-on-bedrock-claude-using-the-model-function-calling-5f400a8f0d62
-"""
 
 class Claude(Model):
     def __init__(self, tool_config: Optional[ToolConfig] = None):
@@ -70,9 +51,6 @@ class Claude(Model):
             HumanMessagePromptTemplate(prompt=PromptTemplate(input_variables=user_input_variables, template=self._tool_config.get('user_prompt_template'))),
         ])
 
-        # if system_input_variables:
-        #     prompt = prompt.partial(**system_input_variables)
-
         memory = None
         if chat_history:
             memory = ConversationBufferWindowMemory(
@@ -103,7 +81,7 @@ class Claude(Model):
         self._agent_executor = AgentExecutor(
             agent=agent,
             tools=tools,
-            verbose=True,
+            verbose=False,  # If enabled, I think this is spitting "My output actions" to stdout
             handle_parsing_errors=True,
             early_stopping_method="generate",
             memory=memory,
@@ -114,7 +92,7 @@ class Claude(Model):
     def invoke_agent_executor(self, input: Dict[str, Any], inference_config: Optional[RunnableConfig] = None, **kwargs: Any  ) -> Dict[str, Any]:
         # TODO add token counting for Anthropic
         # with get_openai_callback() as cb:
-        print("*** Invoking with the following input: ", input)
+        logger.debug("*** Invoking with the following input: ", input)
         response = self._agent_executor.invoke(input, inference_config, **kwargs)
 
         # logger.info(f"Total Tokens: {cb.total_tokens}")
